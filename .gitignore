@@ -1,0 +1,6 @@
+dist
+.cache
+.DS_Store
+node_modules
+.nyc_output
+*.log
