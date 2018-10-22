@@ -19,6 +19,20 @@ class SuperForm extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this)
   }
 
+  shouldComponentUpdate(nextProps, nextState, nextContext) {
+    if (this.state !== nextState) {
+      return true
+    }
+     if(this.isControlled) {
+       if (this.props.value !== nextProps.value) {
+         return true
+       }
+       if (this.props.defaultValue !== nextProps.defaultValue) {
+         return false
+       }
+     }
+  }
+
   componentDidUpdate(prevProps, prevState) {
     if (prevProps.value !== this.props.value && this.isControlled) {
       this.setState({
@@ -36,11 +50,14 @@ class SuperForm extends React.Component {
   }
 
   handleChange(e){
-    const value = {
-      ...this.state.value,
-      [e.target.name]: e.target.value,
-    }
-    this.setState({value})
+    const {name, value} = e.target
+    this.setState({
+      value: {
+        ...this.state.value,
+        [name]: value,
+      }
+    })
+    this.props.onChange({ name, value })
   }
 
   createLayout() {
@@ -98,7 +115,6 @@ class SuperForm extends React.Component {
 
 
   renderInput(item) {
-    
     const {
       model,
       render,
@@ -106,7 +122,9 @@ class SuperForm extends React.Component {
       errors,
       theme,
     } = this.props
+    
     const { type } = item
+
     if (renderers[type]) {
       const Component = renderers[type]
       return <Component {...this.props} />
@@ -119,6 +137,11 @@ class SuperForm extends React.Component {
           onChange={this.handleChange}
           value={this.state.value[item.name]}
           className={cx(theme.input, errors[item.name] && theme.inputInvalid)}
+          {...item}
+          style={{
+            display: 'block',
+            width: '100%'
+          }}
         />
       </div>
     )
@@ -132,14 +155,19 @@ class SuperForm extends React.Component {
     } = this.props
     return (
       <div
-        className={cx(theme.row)}
         key={`sf-row-${index}`}
       >
         <label>
           <div
             className={cx(theme.label, errors[item.name] && theme.labelInvalid)}
           >
-            {item.label || item.name}
+            {item.label || item.name}: 
+            {item.required ? (
+              <span style={{
+                color: 'red',
+                fontWeight: 'bold'
+              }}>*</span>
+            ):(null)}
           </div>
           <div className={cx(theme.input, errors[item.name] && theme.inputInvalid)}>
             {this.renderInput(item)}
@@ -152,16 +180,19 @@ class SuperForm extends React.Component {
 
   renderForm() {
     const layout = this.createLayout()
+    const {
+      theme
+    } = this.props
     return (
       <React.Fragment>
         {layout.map((row, index) => {
           if (Array.isArray(row)) {
             return (
-              <Row key={`sf-row-${index}`}>
+              <Row key={`sf-row-${index}`} className={cx(theme.row)}>
                 {row.map((cell, cindex) => {
                   const formItem = this.getFormItemObject(cell)
                   return (
-                    <Col key={`sf-col-${cindex}`}>
+                    <Col key={`sf-col-${cindex}`} className={theme.col}>
                       {this.renderField(formItem, index)}
                     </Col>
                   )
@@ -170,7 +201,11 @@ class SuperForm extends React.Component {
             )
           } else {
             const formItem = this.getFormItemObject(row)
-            return this.renderField(formItem, index)
+            return (
+              <Row key={`sf-row-${index}`} className={cx(theme.row)}>
+                {this.renderField(formItem, index)}
+              </Row>
+            )
           }
         })}
       </React.Fragment>
@@ -187,6 +222,9 @@ class SuperForm extends React.Component {
       renderer,
       layout,
       onSubmit,
+      schema,
+      renderers,
+      errors,
       /* eslint-enable rule */
       Header,
       children,
@@ -215,6 +253,7 @@ class SuperForm extends React.Component {
 
 
 SuperForm.defaultProps = {
+  onChange: f => f,
   renderer: require('./renderer').default,
   renderers: {},
   defaultValue: {},
@@ -222,6 +261,11 @@ SuperForm.defaultProps = {
   theme: {},
   errors: {},
   schema: {},
+}
+
+
+SuperForm.setRenderer = (type, render) => {
+  SuperForm.defaultProps.renderers[type] = 123
 }
 
 export default SuperForm
