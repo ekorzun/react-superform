@@ -6,6 +6,15 @@
   <title>Page Title</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      background: #242424
+    }
+
     .container {
       width: 60%;
       max-width: 640px;
@@ -19,10 +28,21 @@
       padding-bottom: 10px;
       margin-bottom: 10px;
       border-bottom: 1px solid #ddd;
+      background: rgba(255, 255, 255, .3)
     }
 
     .col {
-      padding: 10px
+      padding: 10px;
+      background: rgba(33, 33, 33, .1)
+    }
+
+    .label {
+      text-transform: uppercase;
+      font-style: italic
+    }
+
+    .labelInvalid {
+      color: red !important;
     }
   </style>
 </head>

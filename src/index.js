@@ -19,7 +19,7 @@ export {
 //           onError={this.handleError}
 //           validateOn={`submit|change|null`}
 //           validate={f => f}
-//            plugins={[]}
+//           plugins={[]}
 //           errors={{
 //             name: `msg`
 //           }}

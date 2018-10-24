@@ -29,12 +29,26 @@ class App extends React.Component {
     })
   }
 
+  handleSubmit = (e, data) => {
+    alert(JSON.stringify(data))
+  }
+
+  validate = (data, keyMode) => {
+    const errs = {}
+    if(data.age < 21) {
+      return "Младше 45"
+    }
+  }
+
   render() {
     return (
       <SuperForm
-        defaultValue={this.state}
         schema={this.schema}
+        defaultValue={this.state}
         onChange={this.handleChange}
+        onSubmit={this.handleSubmit}
+        validate={this.validate}
+        validateOn='change'
         layout={[
           ['email', 'name'],
           ['age']
@@ -43,8 +57,12 @@ class App extends React.Component {
           container: 'container',
           row: 'row',
           col: 'col',
+          label: 'label',
+          labelInvalid: 'labelInvalid',
         }}
-      />
+      >
+        <button type='submit'>SAVE</button>
+      </SuperForm>
     )
   }
 }

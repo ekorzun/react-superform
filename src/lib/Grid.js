@@ -3,11 +3,12 @@ import React from 'react'
 const RowStyle = {
   display: 'flex',
   flexDirection: 'row',
-  flex: '0 1 auto'
+  flex: '0 1 auto',
+  alignContent: 'stretch'
 }
 
 const ColStyle = {
-  flex: '0 0 auto'
+  flex: '1'
 }
 
 export const Row = ({children, className}) => (

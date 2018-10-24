@@ -1,8 +1,11 @@
 import React from 'react'
 import cx from 'classnames'
-import {Row, Col} from './Grid'
+import { Row, Col } from './Grid'
 
 class SuperForm extends React.Component {
+
+  static renderers = {}
+  static validators = {}
 
   constructor(props, context) {
     super(props, context)
@@ -23,14 +26,14 @@ class SuperForm extends React.Component {
     if (this.state !== nextState) {
       return true
     }
-     if(this.isControlled) {
-       if (this.props.value !== nextProps.value) {
-         return true
-       }
-       if (this.props.defaultValue !== nextProps.defaultValue) {
-         return false
-       }
-     }
+    if (this.isControlled) {
+      if (this.props.value !== nextProps.value) {
+        return true
+      }
+      if (this.props.defaultValue !== nextProps.defaultValue) {
+        return false
+      }
+    }
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -42,21 +45,77 @@ class SuperForm extends React.Component {
   }
 
 
-  handleSubmit(e){
-    if (this.props.onSubmit) {
-      e.preventDefault()
-      this.props.onSubmit(e, this.state)
-    }
+  setErrors = (errors) => {
+    this.setState({errors})
   }
 
-  handleChange(e){
-    const {name, value} = e.target
+  setError = (key, value) => {
+    this.setState({
+      errors: {
+        ...this.state.errors,
+        [key]: value
+      }
+    })
+  }
+
+  unsetError = (key) => {
+    this.setState({
+      errors: {
+        ...this.state.errors,
+        [key]: null,
+      }
+    })
+  }
+
+  validate = () => {
+    const { validate } = this.props
+    if (!validate) {
+      return true
+    }
+    const errs = validate(this.state.value)
+    if (errs) {
+      if(typeof errs === 'object') {
+        this.setErrors(errs)
+      }
+    }
+    return true
+  }
+
+  handleSubmit(e) {
+    const {
+      onSubmit,
+      validate,
+    } = this.props
+    const { value } = this.state
+    const isValid = this.validate()
+
+    if (onSubmit) {
+      e.preventDefault()
+      isValid && onSubmit(e, value)
+    } else if (!isValid) {
+      e.preventDefault()
+    }
+
+    return true
+  }
+
+  handleChange(e) {
+    const { validate, validateOn } = this.props
+    const { name, value } = e.target
     this.setState({
       value: {
         ...this.state.value,
         [name]: value,
       }
     })
+    if (validateOn === 'change' && validate) {
+      const err = validate({ [name]: value })
+      if (err) {
+        this.setError(name, err)
+      } else {
+        this.unsetError(name)
+      }
+    }
     this.props.onChange({ name, value })
   }
 
@@ -69,33 +128,38 @@ class SuperForm extends React.Component {
       value,
       layout,
     } = this.props
-    if(layout) {
+    if (layout) {
       const cvalue = value || defaultValue
       const convert = field => {
-        if(typeof field === 'string') {
-          return schema[field] || {
+        if (typeof field === 'string') {
+          return schema[field] ? {
             name: field,
-            label: field,
-            type: typeof (cvalue[field] || {}).value,
-          }
+            ...schema[field],
+          } : {
+              name: field,
+              label: field,
+              type: typeof (cvalue[field] || {}).value,
+            }
         }
       }
       return (this.$layout = layout.map(field => {
-        if(Array.isArray(field)) {
+        if (Array.isArray(field)) {
           return field.map(f => convert(f))
         } else {
           return convert(field)
         }
       }))
     }
-    if (model) { return (this.$layout = model.getAttributes()) }
-    if(schema) {
+    if (model) {
+      return (this.$layout = model.getAttributes())
+    }
+    if (schema) {
       return (this.$layout = (Array.isArray(schema)
         ? schema
         : Object.keys(schema)
       ))
     }
-    if(value || defaultValue) {
+    if (value || defaultValue) {
       const cvalue = value || defaultValue
       return Object
         .keys(cvalue)
@@ -118,11 +182,10 @@ class SuperForm extends React.Component {
     const {
       model,
       render,
-      renderers,
-      errors,
       theme,
     } = this.props
-    
+    const { errors } = this.state
+    const { renderers } = SuperForm
     const { type } = item
 
     if (renderers[type]) {
@@ -131,19 +194,18 @@ class SuperForm extends React.Component {
     }
 
     return (
-      <div>
-        <input
-          name={item.name}
-          onChange={this.handleChange}
-          value={this.state.value[item.name]}
-          className={cx(theme.input, errors[item.name] && theme.inputInvalid)}
-          {...item}
-          style={{
-            display: 'block',
-            width: '100%'
-          }}
-        />
-      </div>
+      <input
+        name={item.name}
+        onChange={this.handleChange}
+        value={this.state.value[item.name]}
+        className={cx(theme.input, errors[item.name] && theme.inputInvalid)}
+        {...item}
+        style={{
+          display: 'block',
+          width: '100%'
+        }}
+      />
+
     )
   }
 
@@ -151,8 +213,10 @@ class SuperForm extends React.Component {
   renderField(item, index) {
     const {
       theme,
-      errors,
+      renderLabel,
     } = this.props
+    const { errors, value } = this.state
+
     return (
       <div
         key={`sf-row-${index}`}
@@ -161,13 +225,17 @@ class SuperForm extends React.Component {
           <div
             className={cx(theme.label, errors[item.name] && theme.labelInvalid)}
           >
-            {item.label || item.name}: 
+            {renderLabel ? (
+              renderLabel(item, value[item.name])
+            ) : (
+                item.label || item.name
+              )}:
             {item.required ? (
               <span style={{
                 color: 'red',
                 fontWeight: 'bold'
               }}>*</span>
-            ):(null)}
+            ) : (null)}
           </div>
           <div className={cx(theme.input, errors[item.name] && theme.inputInvalid)}>
             {this.renderInput(item)}
@@ -223,8 +291,10 @@ class SuperForm extends React.Component {
       layout,
       onSubmit,
       schema,
-      renderers,
       errors,
+      validate,
+      validateOn,
+      renderLabel,
       /* eslint-enable rule */
       Header,
       children,
@@ -245,7 +315,7 @@ class SuperForm extends React.Component {
           <div className={cx(theme.footer)}>
             {children}
           </div>
-        ):(null)}
+        ) : (null)}
       </Component>
     )
   }
@@ -255,7 +325,6 @@ class SuperForm extends React.Component {
 SuperForm.defaultProps = {
   onChange: f => f,
   renderer: require('./renderer').default,
-  renderers: {},
   defaultValue: {},
   value: null,
   theme: {},
@@ -265,7 +334,11 @@ SuperForm.defaultProps = {
 
 
 SuperForm.setRenderer = (type, render) => {
-  SuperForm.defaultProps.renderers[type] = 123
+  SuperForm.renderers[type] = 123
+}
+
+SuperForm.setValidator = (type, render) => {
+  SuperForm.validators[type] = 123
 }
 
 export default SuperForm
