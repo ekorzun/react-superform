@@ -29,7 +29,7 @@ class App extends React.Component {
     })
   }
 
-  handleSubmit = (e, data) => {
+  handleSubmit = (data, e) => {
     alert(JSON.stringify(data))
   }
 
@@ -51,7 +51,9 @@ class App extends React.Component {
         validateOn='change'
         layout={[
           ['email', 'name'],
-          ['age']
+          ['email', 'name'],
+          ['age'],
+          ['email', 'name', 'email', 'name'],
         ]}
         theme={{
           container: 'container',

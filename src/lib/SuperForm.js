@@ -18,8 +18,6 @@ class SuperForm extends React.Component {
     }
 
     this.isControlled = (props.value !== undefined) ? true : false
-    this.handleChange = this.handleChange.bind(this)
-    this.handleSubmit = this.handleSubmit.bind(this)
   }
 
   shouldComponentUpdate(nextProps, nextState, nextContext) {
@@ -46,7 +44,7 @@ class SuperForm extends React.Component {
 
 
   setErrors = (errors) => {
-    this.setState({errors})
+    this.setState({ errors })
   }
 
   setError = (key, value) => {
@@ -74,14 +72,14 @@ class SuperForm extends React.Component {
     }
     const errs = validate(this.state.value)
     if (errs) {
-      if(typeof errs === 'object') {
+      if (typeof errs === 'object') {
         this.setErrors(errs)
       }
     }
     return true
   }
 
-  handleSubmit(e) {
+  handleSubmit = e => {
     const {
       onSubmit,
       validate,
@@ -91,7 +89,7 @@ class SuperForm extends React.Component {
 
     if (onSubmit) {
       e.preventDefault()
-      isValid && onSubmit(e, value)
+      isValid && onSubmit(value, e)
     } else if (!isValid) {
       e.preventDefault()
     }
@@ -99,7 +97,7 @@ class SuperForm extends React.Component {
     return true
   }
 
-  handleChange(e) {
+  handleChange = e => {
     const { validate, validateOn } = this.props
     const { name, value } = e.target
     this.setState({
@@ -156,7 +154,12 @@ class SuperForm extends React.Component {
     if (schema) {
       return (this.$layout = (Array.isArray(schema)
         ? schema
-        : Object.keys(schema)
+        : Object.keys(schema).map(name => {
+          return {
+            ...schema[name],
+            name,
+          }
+        })
       ))
     }
     if (value || defaultValue) {
@@ -271,7 +274,9 @@ class SuperForm extends React.Component {
             const formItem = this.getFormItemObject(row)
             return (
               <Row key={`sf-row-${index}`} className={cx(theme.row)}>
-                {this.renderField(formItem, index)}
+                <Col>
+                  {this.renderField(formItem, index)}
+                </Col>
               </Row>
             )
           }
