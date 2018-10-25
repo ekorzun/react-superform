@@ -19,7 +19,6 @@ class App extends React.Component {
     this.state = {
       name: '',
       email: 'xxxx',
-      age: 18,
     }
   }
 
@@ -36,7 +35,7 @@ class App extends React.Component {
   validate = (data, keyMode) => {
     const errs = {}
     if(data.age < 21) {
-      return "Младше 45"
+      return "Нелья быть младше 21"
     }
   }
 

@@ -1,6 +1,11 @@
 import React from 'react'
 import cx from 'classnames'
 import { Row, Col } from './Grid'
+import DefaultRenderer from './DefaultRenderer'
+import { 
+  makeSchema,
+  makeLayout,
+} from './utils'
 
 class SuperForm extends React.Component {
 
@@ -16,8 +21,9 @@ class SuperForm extends React.Component {
         ...props.value,
       }
     }
-
     this.isControlled = (props.value !== undefined) ? true : false
+    this.schema = makeSchema(props.schema, this.state.value)
+    this.$layout = makeLayout(props.layout, this.schema)
   }
 
   shouldComponentUpdate(nextProps, nextState, nextContext) {
@@ -38,6 +44,11 @@ class SuperForm extends React.Component {
     if (prevProps.value !== this.props.value && this.isControlled) {
       this.setState({
         value: this.props.value
+      })
+    }
+    if (prevProps.errors !== this.props.errors && this.isControlled) {
+      this.setState({
+        errors: this.props.errors
       })
     }
   }
@@ -117,64 +128,6 @@ class SuperForm extends React.Component {
     this.props.onChange({ name, value })
   }
 
-  createLayout() {
-    if (this.$layout) { return this.$layout }
-    const {
-      model,
-      schema,
-      defaultValue,
-      value,
-      layout,
-    } = this.props
-    if (layout) {
-      const cvalue = value || defaultValue
-      const convert = field => {
-        if (typeof field === 'string') {
-          return schema[field] ? {
-            name: field,
-            ...schema[field],
-          } : {
-              name: field,
-              label: field,
-              type: typeof (cvalue[field] || {}).value,
-            }
-        }
-      }
-      return (this.$layout = layout.map(field => {
-        if (Array.isArray(field)) {
-          return field.map(f => convert(f))
-        } else {
-          return convert(field)
-        }
-      }))
-    }
-    if (model) {
-      return (this.$layout = model.getAttributes())
-    }
-    if (schema) {
-      return (this.$layout = (Array.isArray(schema)
-        ? schema
-        : Object.keys(schema).map(name => {
-          return {
-            ...schema[name],
-            name,
-          }
-        })
-      ))
-    }
-    if (value || defaultValue) {
-      const cvalue = value || defaultValue
-      return Object
-        .keys(cvalue)
-        .map(key => ({
-          name: key,
-          value: cvalue[key],
-          type: typeof cvalue[key],
-        }))
-    }
-
-    throw new Error('Unable to create form schema')
-  }
 
   getFormItemObject(row) {
     return row
@@ -187,6 +140,7 @@ class SuperForm extends React.Component {
       render,
       theme,
     } = this.props
+
     const { errors } = this.state
     const { renderers } = SuperForm
     const { type } = item
@@ -197,18 +151,13 @@ class SuperForm extends React.Component {
     }
 
     return (
-      <input
-        name={item.name}
-        onChange={this.handleChange}
+      <DefaultRenderer
+        item={item}
         value={this.state.value[item.name]}
-        className={cx(theme.input, errors[item.name] && theme.inputInvalid)}
-        {...item}
-        style={{
-          display: 'block',
-          width: '100%'
-        }}
+        error={errors[item.name]}
+        onChange={this.handleChange}
+        theme={theme}
       />
-
     )
   }
 
@@ -243,6 +192,9 @@ class SuperForm extends React.Component {
           <div className={cx(theme.input, errors[item.name] && theme.inputInvalid)}>
             {this.renderInput(item)}
           </div>
+          <div className={cx(theme.comment, errors[item.name] && theme.commentInvalid)}>
+            {errors[item.name]}
+          </div>
         </label>
       </div>
     )
@@ -250,7 +202,7 @@ class SuperForm extends React.Component {
 
 
   renderForm() {
-    const layout = this.createLayout()
+    const layout = this.$layout
     const {
       theme
     } = this.props
@@ -300,6 +252,7 @@ class SuperForm extends React.Component {
       validate,
       validateOn,
       renderLabel,
+      invalidSubmit,
       /* eslint-enable rule */
       Header,
       children,
@@ -329,12 +282,12 @@ class SuperForm extends React.Component {
 
 SuperForm.defaultProps = {
   onChange: f => f,
-  renderer: require('./renderer').default,
   defaultValue: {},
   value: null,
   theme: {},
   errors: {},
   schema: {},
+  invalidSubmit: false,
 }
 
 
