@@ -2,6 +2,27 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import {SuperForm} from '../src/index'
 
+
+const NumberInput = ({
+  value,
+  onChange,
+  name,
+  item,
+}) => {
+  return (
+    <div>
+      <input
+        type='number'
+        value={value}
+        onChange={onChange}
+        name={name}
+      />
+    </div>
+  )
+}
+
+// SuperForm.setRenderer(['number'], NumberInput)
+
 class App extends React.Component {
 
   schema = {
@@ -17,19 +38,23 @@ class App extends React.Component {
   constructor(props){
     super(props)
     this.state = {
-      name: '',
-      email: 'xxxx',
+      users: [
+        {name: '', email: 'xxxx', age: 0}
+      ]
     }
   }
 
-  handleChange = ({name, value}) => {
+  handleChange2 = ({name, value}, index) => {
+    const users = this.state.users.slice(0)
+    users[index][name] = value
     this.setState({
-      [name]: value
+      users
     })
   }
 
-  handleSubmit = (data, e) => {
-    alert(JSON.stringify(data))
+  handleSubmit = (e) => {
+    e && e.preventDefault()
+    alert(JSON.stringify(this.state))
   }
 
   validate = (data, keyMode) => {
@@ -39,31 +64,44 @@ class App extends React.Component {
     }
   }
 
+  pushUser = (e) => {
+    e && e.preventDefault()
+    this.setState({
+      users: [...this.state.users, {name:'', email: '', age: 0}]
+    })
+  }
+
   render() {
+    const {users} = this.state
     return (
-      <SuperForm
-        schema={this.schema}
-        defaultValue={this.state}
-        onChange={this.handleChange}
-        onSubmit={this.handleSubmit}
-        validate={this.validate}
-        validateOn='change'
-        layout={[
-          ['email', 'name'],
-          ['email', 'name'],
-          ['age'],
-          ['email', 'name', 'email', 'name'],
-        ]}
-        theme={{
-          container: 'container',
-          row: 'row',
-          col: 'col',
-          label: 'label',
-          labelInvalid: 'labelInvalid',
-        }}
-      >
+      <form onSubmit={this.handleSubmit}>
+        {users.map((user, index) => {
+          return (
+            <SuperForm
+              Component='div'
+              key={index}
+              index={index}
+              schema={this.schema}
+              defaultValue={user}
+              onChange={this.handleChange2}
+              validate={this.validate}
+              validateOn='change'
+              layout={[
+                ['email', 'name', 'age'],
+              ]}
+              theme={{
+                container: 'container',
+                row: 'row',
+                col: 'col',
+                label: 'label',
+                labelInvalid: 'labelInvalid',
+              }} 
+            />
+          )
+        })}
+        <button onClick={this.pushUser}>+</button>
         <button type='submit'>SAVE</button>
-      </SuperForm>
+      </form>
     )
   }
 }

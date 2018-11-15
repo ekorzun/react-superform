@@ -19,7 +19,7 @@
     "prepublish": "yarn test",
     "prebuild": "rm -rf ./dist",
     "build": "microbundle build --jsx React.createElement -i src/index.js",
-    "dev": "microbundle -w src/index.js",
+    "dev": "parcel serve demo/index.html",
     "test": "nyc mocha --timeout 30000 -R spec --require babel-register test/*.spec.js",
     "pretest": "yarn run build"
   },

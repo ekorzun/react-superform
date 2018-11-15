@@ -5,12 +5,10 @@ import DefaultRenderer from './DefaultRenderer'
 import { 
   makeSchema,
   makeLayout,
+  uniqId,
 } from './utils'
 
 class SuperForm extends React.Component {
-
-  static renderers = {}
-  static validators = {}
 
   constructor(props, context) {
     super(props, context)
@@ -24,6 +22,15 @@ class SuperForm extends React.Component {
     this.isControlled = (props.value !== undefined) ? true : false
     this.schema = makeSchema(props.schema, this.state.value)
     this.$layout = makeLayout(props.layout, this.schema)
+    this.id = props.id || uniqId()
+  }
+
+  componentDidMount(){
+    SuperForm.setForm(this)
+  }
+
+  componentWillUnmount(){
+    SuperForm.unsetForm(this)
   }
 
   shouldComponentUpdate(nextProps, nextState, nextContext) {
@@ -38,6 +45,7 @@ class SuperForm extends React.Component {
         return false
       }
     }
+    return true
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -109,23 +117,28 @@ class SuperForm extends React.Component {
   }
 
   handleChange = e => {
-    const { validate, validateOn } = this.props
+    const { validate, validateOn, index } = this.props
     const { name, value } = e.target
+
     this.setState({
       value: {
         ...this.state.value,
         [name]: value,
       }
     })
+
     if (validateOn === 'change' && validate) {
       const err = validate({ [name]: value })
       if (err) {
         this.setError(name, err)
+        return false
       } else {
         this.unsetError(name)
       }
     }
-    this.props.onChange({ name, value })
+
+
+    this.props.onChange({ name, value }, index)
   }
 
 
@@ -139,22 +152,37 @@ class SuperForm extends React.Component {
       model,
       render,
       theme,
+      onChange,
+      ...other,
     } = this.props
+
+    // console.log('other', other)
 
     const { errors } = this.state
     const { renderers } = SuperForm
-    const { type } = item
+    const { type, name } = item
+    const value = this.state.value[name]
+    const error = errors[name]
 
     if (renderers[type]) {
       const Component = renderers[type]
-      return <Component {...this.props} />
+      return <Component 
+        {...other}
+        name={name}
+        item={item}
+        value={value}
+        error={error}
+        onChange={this.handleChange}
+        theme={theme}
+      />
     }
 
     return (
       <DefaultRenderer
+        name={name}
         item={item}
-        value={this.state.value[item.name]}
-        error={errors[item.name]}
+        value={value}
+        error={error}
         onChange={this.handleChange}
         theme={theme}
       />
@@ -253,6 +281,7 @@ class SuperForm extends React.Component {
       validateOn,
       renderLabel,
       invalidSubmit,
+      onChange,
       /* eslint-enable rule */
       Header,
       children,
@@ -279,6 +308,9 @@ class SuperForm extends React.Component {
   }
 }
 
+SuperForm.forms = {}
+SuperForm.renderers = {}
+SuperForm.validators = {}
 
 SuperForm.defaultProps = {
   onChange: f => f,
@@ -291,12 +323,27 @@ SuperForm.defaultProps = {
 }
 
 
-SuperForm.setRenderer = (type, render) => {
-  SuperForm.renderers[type] = 123
+SuperForm.setForm = form => {
+  SuperForm.forms[form.id] = form
 }
 
-SuperForm.setValidator = (type, render) => {
-  SuperForm.validators[type] = 123
+SuperForm.unsetForm = form => {
+  SuperForm.forms[form.id] = null
+  delete SuperForm.forms[form.id]
+}
+
+SuperForm.setRenderer = (types, Component) => {
+  (Array.isArray(types) ? types: [types])
+    .forEach(type => {
+      SuperForm.renderers[type] = Component
+    })
+}
+
+SuperForm.setValidator = (types, validate) => {
+  (Array.isArray(types) ? types: [types])
+    .forEach(type => {
+      SuperForm.renderers[type] = Component
+    })
 }
 
 export default SuperForm

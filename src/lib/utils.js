@@ -1,4 +1,7 @@
 
+let id = +new Date
+export const uniqId = () => `superform-${++id}`
+
 export const makeLayout = (layout, schema) => {
   const rlayout = []
   if (layout) {
@@ -14,7 +17,6 @@ export const makeLayout = (layout, schema) => {
   } else {
     Object.keys(schema).forEach(key => {
       rlayout.push(schema[key])
-      
     })
   }
   return rlayout
