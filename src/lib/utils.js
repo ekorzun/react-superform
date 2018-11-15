@@ -37,6 +37,23 @@ const getSchemaFieldType = (fieldObj, value) => {
 
 export const makeSchema = (schema, value) => {
   const rschema = {}
+  if(value) {
+    Object.keys(value).forEach(name => {
+      rschema[name] = {
+        name,
+        type: getSchemaFieldType(value[name], value),
+      }
+      if (typeof value[name] === 'object') {
+        if (value[name]) {
+          Object.assign(rschema[name], value[name])
+        }
+      } else {
+        rschema[name].value = value[name]
+      }
+
+    })
+  }
+
   if(schema) {
     if (Array.isArray(schema)) {
       schema.forEach(fieldObj => {
@@ -62,22 +79,6 @@ export const makeSchema = (schema, value) => {
         // console.log('rschema[fieldName]: ', rschema[fieldName]);
       })
     }
-  }
-  if(value) {
-    Object.keys(value).forEach(name => {
-      rschema[name] = {
-        name,
-        type: getSchemaFieldType(value[name], value),
-      }
-      if (typeof value[name] === 'object') {
-        if (value[name]) {
-          Object.assign(rschema[name], value[name])
-        }
-      } else {
-        rschema[name].value = value[name]
-      }
-
-    })
   }
   return rschema
 }
