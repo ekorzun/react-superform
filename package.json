@@ -11,10 +11,8 @@
     "type": "git",
     "url": "https://github.com/ekorzun/react-superforms.git"
   },
-  "main": "dist/superform.js",
-  "umd:main": "dist/superform.umd.js",
-  "module": "dist/superform.mjs",
-  "source": "src/superform.js",
+  
+  "main": "dist/index.js",
   "scripts": {
     "prepublish": "yarn test",
     "prebuild": "rm -rf ./dist",
