@@ -1,6 +1,6 @@
 {
   "name": "react-superform",
-  "version": "1.1.0",
+  "version": "1.2.2",
   "homepage": "https://github.com/ekorzun/react-superforms",
   "author": {
     "name": "Evgeny Korzun",
@@ -11,12 +11,11 @@
     "type": "git",
     "url": "https://github.com/ekorzun/react-superforms.git"
   },
-  
   "main": "dist/index.js",
   "scripts": {
     "prepublish": "yarn test",
-    "prebuild": "rm -rf ./dist",
-    "build": "microbundle build --jsx React.createElement -i src/index.js",
+    "prebuild": "rm -rf ./dist && mkdir dist",
+    "build": "parcel build src/index.js --out-dir dist",
     "dev": "parcel serve demo/index.html",
     "test": "nyc mocha --timeout 30000 -R spec --require babel-register test/*.spec.js",
     "pretest": "yarn run build"
