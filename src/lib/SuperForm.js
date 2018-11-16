@@ -149,7 +149,6 @@ class SuperForm extends React.Component {
 
   renderInput(item) {
     const {
-      model,
       render,
       theme,
       onChange,
@@ -160,12 +159,13 @@ class SuperForm extends React.Component {
 
     const { errors } = this.state
     const { renderers } = SuperForm
-    const { type, name } = item
+    const { type, name, displayType, model } = item
     const value = this.state.value[name]
     const error = errors[name]
+    const modelKey = !!model ? `${model.name}_${name}` : null
 
-    if (renderers[type]) {
-      const Component = renderers[type]
+    if (renderers[modelKey] || renderers[displayType] ||  renderers[type]) {
+      const Component = renderers[modelKey] || renderers[displayType] || renderers[type]
       return <Component 
         {...other}
         name={name}
@@ -271,7 +271,6 @@ class SuperForm extends React.Component {
       className,
       theme,
       /* eslint-disable rule */
-      model,
       renderer,
       layout,
       onSubmit,
@@ -335,7 +334,12 @@ SuperForm.unsetForm = form => {
 SuperForm.setRenderer = (types, Component) => {
   (Array.isArray(types) ? types: [types])
     .forEach(type => {
-      SuperForm.renderers[type] = Component
+      if(typeof type === 'string') {
+        SuperForm.renderers[type] = Component
+      } else {
+        const {field, model} = type
+        SuperForm.renderers[`${model}_${field}`] = Component
+      }
     })
 }
 
