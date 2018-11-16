@@ -153,7 +153,7 @@ class SuperForm extends React.Component {
       render,
       theme,
       onChange,
-      ...other,
+      ...other
     } = this.props
 
     // console.log('other', other)
