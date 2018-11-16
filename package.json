@@ -1,6 +1,6 @@
 {
   "name": "react-superforms",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "homepage": "https://github.com/ekorzun/react-superform",
   "author": {
     "name": "Evgeny Korzun",
@@ -13,7 +13,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "prepublish": "echo 1",
+    "prepublish": "yarn build",
     "prebuild": "rm -rf ./dist && mkdir dist",
     "build": "parcel build src/index.js --out-dir dist",
     "dev": "parcel serve demo/index.html",
