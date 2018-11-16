@@ -20,8 +20,27 @@ const NumberInput = ({
     </div>
   )
 }
+const EmailInput = ({
+  value,
+  onChange,
+  name,
+  item,
+}) => {
+  return (
+    <div>
+      <input
+        type='email'
+        placeholder='user@example.com'
+        value={value}
+        onChange={onChange}
+        name={name}
+      />
+    </div>
+  )
+}
 
 // SuperForm.setRenderer(['number'], NumberInput)
+SuperForm.setRenderer(['email'], EmailInput)
 
 class App extends React.Component {
 
@@ -82,6 +101,9 @@ class App extends React.Component {
               key={index}
               index={index}
               schema={this.schema}
+              overrideMap={{
+                'email': 'email'
+              }}
               defaultValue={user}
               onChange={this.handleChange2}
               validate={this.validate}

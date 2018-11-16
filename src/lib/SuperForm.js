@@ -147,7 +147,7 @@ class SuperForm extends React.Component {
   }
 
 
-  renderInput(item) {
+  renderInput(item, overrideType) {
     const {
       render,
       theme,
@@ -162,7 +162,7 @@ class SuperForm extends React.Component {
     const { type, name, displayType, model } = item
     const value = this.state.value[name]
     const error = errors[name]
-    const modelKey = !!model ? `${model.name}_${name}` : null
+    const modelKey = overrideType || (!!model ? `${model.name}_${name}` : null)
 
     if (renderers[modelKey] || renderers[displayType] ||  renderers[type]) {
       const Component = renderers[modelKey] || renderers[displayType] || renderers[type]
@@ -194,6 +194,7 @@ class SuperForm extends React.Component {
     const {
       theme,
       renderLabel,
+      overrideMap,
     } = this.props
     const { errors, value } = this.state
 
@@ -218,7 +219,7 @@ class SuperForm extends React.Component {
             ) : (null)}
           </div>
           <div className={cx(theme.input, errors[item.name] && theme.inputInvalid)}>
-            {this.renderInput(item)}
+            {this.renderInput(item, overrideMap[item.name])}
           </div>
           <div className={cx(theme.comment, errors[item.name] && theme.commentInvalid)}>
             {errors[item.name]}
@@ -318,6 +319,7 @@ SuperForm.defaultProps = {
   theme: {},
   errors: {},
   schema: {},
+  overrideMap: {},
   invalidSubmit: false,
 }
 
@@ -338,6 +340,7 @@ SuperForm.setRenderer = (types, Component) => {
         SuperForm.renderers[type] = Component
       } else {
         const {field, model} = type
+        console.log('field, model: ', field, model);
         SuperForm.renderers[`${model}_${field}`] = Component
       }
     })
