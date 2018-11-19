@@ -163,22 +163,12 @@ class SuperForm extends React.Component {
     const value = this.state.value[name]
     const error = errors[name]
     const modelKey = overrideType || (!!model ? `${model.name}_${name}` : null)
-
-    if (renderers[modelKey] || renderers[displayType] ||  renderers[type]) {
-      const Component = renderers[modelKey] || renderers[displayType] || renderers[type]
-      return <Component 
-        {...other}
-        name={name}
-        item={item}
-        value={value}
-        error={error}
-        onChange={this.handleChange}
-        theme={theme}
-      />
-    }
+    const Component = 
+      renderers[modelKey] || renderers[displayType] || renderers[type] || DefaultRenderer
 
     return (
-      <DefaultRenderer
+      <Component
+        {...other}
         name={name}
         item={item}
         value={value}
@@ -282,6 +272,7 @@ class SuperForm extends React.Component {
       renderLabel,
       invalidSubmit,
       onChange,
+      overrideMap,
       /* eslint-enable rule */
       Header,
       children,
