@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {Fragment} from 'react'
 import cx from 'classnames'
 import { Row, Col } from './Grid'
 import DefaultRenderer from './DefaultRenderer'
@@ -152,29 +152,31 @@ class SuperForm extends React.Component {
       render,
       theme,
       onChange,
+      Component,
       ...other
     } = this.props
 
     // console.log('other', other)
-
     const { errors } = this.state
     const { renderers } = SuperForm
     const { type, name, displayType, model } = item
     const value = this.state.value[name]
     const error = errors[name]
     const modelKey = overrideType || (!!model ? `${model.name}_${name}` : null)
-    const Component = 
+    const InputComponent = 
       renderers[modelKey] || renderers[displayType] || renderers[type] || DefaultRenderer
 
+    // console.log('Component: ', Component);
+
     return (
-      <Component
-        {...other}
+      <InputComponent
         name={name}
         item={item}
         value={value}
         error={error}
         onChange={this.handleChange}
         theme={theme}
+        {...other}
       />
     )
   }
@@ -226,7 +228,7 @@ class SuperForm extends React.Component {
       theme
     } = this.props
     return (
-      <React.Fragment>
+      <Fragment>
         {layout.map((row, index) => {
           if (Array.isArray(row)) {
             return (
@@ -252,7 +254,7 @@ class SuperForm extends React.Component {
             )
           }
         })}
-      </React.Fragment>
+      </Fragment>
     )
   }
 
@@ -285,7 +287,7 @@ class SuperForm extends React.Component {
         className={cx(theme.container, className)}
         {...other}
       >
-        {Header ? <Header {...this.props} /> : null}
+        {Header ? <Header /> : null}
         <div className={cx(theme.body)}>
           {this.renderForm()}
         </div>
