@@ -170,13 +170,13 @@ class SuperForm extends React.Component {
 
     return (
       <InputComponent
+        {...other}
         name={name}
         item={item}
         value={value}
         error={error}
         onChange={this.handleChange}
         theme={theme}
-        {...other}
       />
     )
   }
