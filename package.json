@@ -1,6 +1,6 @@
 {
   "name": "react-superforms",
-  "version": "1.2.10",
+  "version": "1.2.11",
   "homepage": "https://github.com/ekorzun/react-superform",
   "author": {
     "name": "Evgeny Korzun",
@@ -48,6 +48,6 @@
     "react": "^16.5.2",
     "react-addons-test-utils": "^15.6.2",
     "react-dom": "^16.5.2",
-    "react-supermodel": "^1.1.11"
+    "react-supermodel": "^1.2.23"
   }
 }
