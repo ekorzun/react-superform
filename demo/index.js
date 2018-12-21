@@ -2,24 +2,39 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import {SuperForm} from '../src/index'
 
+import connect, {Model, setConfig} from 'react-supermodel'
+import Baobab from 'baobab'
 
-const NumberInput = ({
-  value,
-  onChange,
-  name,
-  item,
-}) => {
-  return (
-    <div>
-      <input
-        type='number'
-        value={value}
-        onChange={onChange}
-        name={name}
-      />
-    </div>
-  )
+const tree = new Baobab({
+  $api: {}
+})
+
+setConfig({tree})
+
+const X = new Model({
+  name: 'xxx',
+  api: {},
+
+})
+
+class NumberInput extends React.Component {
+  render(){
+    const {value, name, onChange, children} = this.props
+    return (
+      <div style={{background:'#eeffee'}}>
+        <input
+          type='number'
+          value={value}
+          onChange={onChange}
+          name={name}
+        />
+      </div>
+    )
+  }
 }
+
+const CNumberInput2 = connect(X)(NumberInput)
+
 const EmailInput = ({
   value,
   onChange,
@@ -39,8 +54,9 @@ const EmailInput = ({
   )
 }
 
-// SuperForm.setRenderer(['number'], NumberInput)
-SuperForm.setRenderer(['email'], EmailInput)
+
+// SuperForm.setRenderer(['number'], a => <CNumberInput2 {...a} />)
+// SuperForm.setRenderer(['email'], EmailInput)
 
 class App extends React.Component {
 
@@ -48,8 +64,8 @@ class App extends React.Component {
     age: {
       label: 'Возраст',
       type: 'number',
-      min: 18,
-      max: 65,
+      min: 1,
+      max: 100,
       required: true,
     }
   }
@@ -76,10 +92,15 @@ class App extends React.Component {
     alert(JSON.stringify(this.state))
   }
 
-  validate = (data, keyMode) => {
-    const errs = {}
+  validate2222 = (data, keyMode) => {
     if(data.age < 21) {
       return "Нелья быть младше 21"
+    }
+  }
+
+  validate = (data, keyMode) => {
+    if(data.age < 21) {
+      return {age: "Нелья быть младше 21"}
     }
   }
 
@@ -87,6 +108,14 @@ class App extends React.Component {
     e && e.preventDefault()
     this.setState({
       users: [...this.state.users, {name:'', email: '', age: 0}]
+    })
+  }
+
+  handleDeleteClick = props => {
+    const {users} = this.state
+    const {index} = props
+    this.setState({
+      users: users.filter((user, i) => i !== index)
     })
   }
 
@@ -98,18 +127,26 @@ class App extends React.Component {
           return (
             <SuperForm
               Component='div'
+              className='animated fadeInUp'
               key={index}
               index={index}
               schema={this.schema}
               overrideMap={{
-                'email': 'email'
+                'email': 'email',
+                'delete': (props) => (
+                  <h3 onClick={e => {
+                    this.handleDeleteClick(props)
+                  }}>
+                    УДОЛИТЬ
+                  </h3>
+                )
               }}
-              defaultValue={user}
+              value={user}
               onChange={this.handleChange2}
               validate={this.validate}
               validateOn='change'
               layout={[
-                ['email', 'name', 'age'],
+                ['email', 'name', 'age', 'delete'],
               ]}
               theme={{
                 container: 'container',
