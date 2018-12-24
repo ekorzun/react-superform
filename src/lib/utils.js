@@ -4,19 +4,25 @@ export const uniqId = () => `superform-${++id}`
 
 export const makeLayout = (layout, schema) => {
   const rlayout = []
+  const makefield = f => schema[f] || {
+    type: f,
+    name: f,
+    fake: true,
+  }
+
   if (layout) {
     layout.forEach(field => {
       if(Array.isArray(field)){
-        rlayout.push(field.map(f => {
-          return schema[f]
-        }))
+        rlayout.push(field.map(f =>
+          makefield(f)
+        ))
       } else {
-        rlayout.push(schema[field])
+        rlayout.push(makefield(field))
       }
     })
   } else {
     Object.keys(schema).forEach(key => {
-      rlayout.push(schema[key])
+      rlayout.push(makefield(key))
     })
   }
   return rlayout

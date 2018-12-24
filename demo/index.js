@@ -58,6 +58,53 @@ const EmailInput = ({
 // SuperForm.setRenderer(['number'], a => <CNumberInput2 {...a} />)
 // SuperForm.setRenderer(['email'], EmailInput)
 
+
+
+
+SuperForm.setRenderer('select', props => {
+  const {item} = props
+  return (
+    <select 
+    value={props.value}
+    name={props.name} onChange={props.onChange}>
+      {item.options.map((opt, i) => 
+        <option value={i} key={i}>{opt}</option>
+      )}
+    </select>
+  )
+})
+
+
+
+SuperForm.setRenderer('custom-email', props => {
+  console.log('props: ', props);
+  return (
+    <div>
+      <h2>КАСТОМНЫЙ ЕМЕЙЛ</h2>
+      <h3>
+        <input 
+          style={{
+            color: 'blue',
+            fontSize: 20
+          }}
+          type='text' 
+          name={props.name}
+          value={props.value}
+          onChange={e => {
+            const {name, value} = e.target
+            props.onChange({
+              target: {
+                name, 
+                value
+              }
+            })
+          }}
+        />
+      </h3>
+    </div>
+  )
+})
+
 class App extends React.Component {
 
   schema = {
@@ -75,7 +122,14 @@ class App extends React.Component {
     this.state = {
       users: [
         {name: '', email: 'xxxx', age: 0}
-      ]
+      ],
+
+      form: {
+        name: '',
+        email: '',
+        age: 18,
+        sex: '2'
+      }
     }
   }
 
@@ -119,7 +173,58 @@ class App extends React.Component {
     })
   }
 
-  render() {
+
+  render(){
+    return (
+      <SuperForm 
+        onChange={e => {
+          const {name, value} = e
+          this.setState({
+            form: {
+              ...this.state.form,
+              [name]: value
+            }
+          })
+        }}
+        onSubmit={e => {
+          alert(JSON.stringify(
+            e, null, 2
+          ))
+        }}
+        schema={{
+          name: {
+            required: true,
+            label: 'Введите ваше имя',
+          },
+          email: {
+            type: 'custom-email',
+          },
+          sex: {
+            type: 'select',
+            label: 'Пол',
+            options: ['выберете', 'женский', 'мужской']
+          }
+        }}
+        overrideMap={{
+          email: 'string'
+        }}
+        value={this.state.form}
+        theme={{
+          container: 'container',
+          row: 'row',
+          col: 'col',
+          label: 'label',
+          labelInvalid: 'labelInvalid',
+        }} 
+
+      >
+        {JSON.stringify(this.state.form)}
+        <button type='submit'>Отправить</button>
+      </SuperForm>
+    )
+  }
+
+  render22222() {
     const {users} = this.state
     return (
       <form onSubmit={this.handleSubmit}>

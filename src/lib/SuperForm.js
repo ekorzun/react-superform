@@ -1,8 +1,8 @@
-import React, {Fragment} from 'react'
+import React, { Fragment } from 'react'
 import cx from 'classnames'
 import { Row, Col } from './Grid'
 import DefaultRenderer from './DefaultRenderer'
-import { 
+import {
   makeSchema,
   makeLayout,
   uniqId,
@@ -25,11 +25,11 @@ class SuperForm extends React.Component {
     this.id = props.id || uniqId()
   }
 
-  componentDidMount(){
+  componentDidMount() {
     SuperForm.setForm(this)
   }
 
-  componentWillUnmount(){
+  componentWillUnmount() {
     SuperForm.unsetForm(this)
   }
 
@@ -117,6 +117,7 @@ class SuperForm extends React.Component {
   }
 
   handleChange = e => {
+    console.log('e: ', e);
     const { validate, validateOn, index } = this.props
     const { name, value } = e.target
 
@@ -130,7 +131,11 @@ class SuperForm extends React.Component {
     if (validateOn === 'change' && validate) {
       const err = validate({ [name]: value })
       if (err) {
-        this.setError(name, err)
+        if (typeof err === 'string') {
+          this.setError(name, err)
+        } else if (typeof err === 'object') {
+          this.setErrors(err)
+        }
         return false
       } else {
         this.unsetError(name)
@@ -153,6 +158,7 @@ class SuperForm extends React.Component {
       theme,
       onChange,
       Component,
+      overrideMap,
       ...other
     } = this.props
 
@@ -163,7 +169,19 @@ class SuperForm extends React.Component {
     const value = this.state.value[name]
     const error = errors[name]
     const modelKey = overrideType || (!!model ? `${model.name}_${name}` : null)
-    const InputComponent = 
+
+    if (typeof overrideType === 'function') {
+      return overrideType({
+        value,
+        error,
+        item,
+        name,
+        onChange,
+        index: this.props.index
+      })
+    }
+
+    const InputComponent =
       renderers[modelKey] || renderers[displayType] || renderers[type] || DefaultRenderer
 
     // console.log('Component: ', Component);
@@ -176,19 +194,25 @@ class SuperForm extends React.Component {
         value={value}
         error={error}
         onChange={this.handleChange}
+        setError={this.setError}
+        unsetError={this.unsetError}
         theme={theme}
       />
     )
   }
 
 
-  renderField(item, index) {
+  renderField(item, index, name) {
     const {
       theme,
       renderLabel,
       overrideMap,
     } = this.props
     const { errors, value } = this.state
+
+    if (!item) {
+      item = { name, type: name, fake: true }
+    }
 
     return (
       <div
@@ -198,12 +222,14 @@ class SuperForm extends React.Component {
           <div
             className={cx(theme.label, errors[item.name] && theme.labelInvalid)}
           >
-            {renderLabel ? (
-              renderLabel(item, value[item.name])
-            ) : (
-                item.label || item.name
-              )}:
-            {item.required ? (
+            {!item.fake && (
+              (renderLabel ? (
+                renderLabel(item, value[item.name])
+              ) : (
+                  item.label || item.name
+                )) + ':'
+            )}
+            {(!item.fake && item.required) ? (
               <span style={{
                 color: 'red',
                 fontWeight: 'bold'
@@ -211,7 +237,7 @@ class SuperForm extends React.Component {
             ) : (null)}
           </div>
           <div className={cx(theme.input, errors[item.name] && theme.inputInvalid)}>
-            {this.renderInput(item, overrideMap[item.name])}
+            {this.renderInput(item, overrideMap[item.name], index)}
           </div>
           <div className={cx(theme.comment, errors[item.name] && theme.commentInvalid)}>
             {errors[item.name]}
@@ -224,6 +250,7 @@ class SuperForm extends React.Component {
 
   renderForm() {
     const layout = this.$layout
+    // console.log('layout: ', layout);
     const {
       theme
     } = this.props
@@ -231,13 +258,14 @@ class SuperForm extends React.Component {
       <Fragment>
         {layout.map((row, index) => {
           if (Array.isArray(row)) {
+            {/* alert(row) */ }
             return (
               <Row key={`sf-row-${index}`} className={cx(theme.row)}>
                 {row.map((cell, cindex) => {
                   const formItem = this.getFormItemObject(cell)
                   return (
                     <Col key={`sf-col-${cindex}`} className={theme.col}>
-                      {this.renderField(formItem, index)}
+                      {this.renderField(formItem, index, cell)}
                     </Col>
                   )
                 })}
@@ -327,12 +355,12 @@ SuperForm.unsetForm = form => {
 }
 
 SuperForm.setRenderer = (types, Component) => {
-  (Array.isArray(types) ? types: [types])
+  (Array.isArray(types) ? types : [types])
     .forEach(type => {
-      if(typeof type === 'string') {
+      if (typeof type === 'string') {
         SuperForm.renderers[type] = Component
       } else {
-        const {field, model} = type
+        const { field, model } = type
         console.log('field, model: ', field, model);
         SuperForm.renderers[`${model}_${field}`] = Component
       }
@@ -340,7 +368,7 @@ SuperForm.setRenderer = (types, Component) => {
 }
 
 SuperForm.setValidator = (types, validate) => {
-  (Array.isArray(types) ? types: [types])
+  (Array.isArray(types) ? types : [types])
     .forEach(type => {
       SuperForm.renderers[type] = Component
     })
