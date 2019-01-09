@@ -12,6 +12,7 @@ const SuperFormDefaultRenderer = ({
   error,
   theme,
   onChange,
+  onFocus,
 }) => {
   switch(item.type) {
     case 'number':
@@ -27,9 +28,11 @@ const SuperFormDefaultRenderer = ({
           autoComplete='off'
           name={item.name}
           onChange={onChange}
+          onFocus={onFocus}
           className={cx(theme.input, error && theme.inputInvalid)}
           value={value || ''}
           style={defaultStyle}
+          
         />
       )
     }

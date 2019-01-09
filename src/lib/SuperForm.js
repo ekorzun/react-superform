@@ -31,6 +31,8 @@ class SuperForm extends React.Component {
 
   componentWillUnmount() {
     SuperForm.unsetForm(this)
+    clearTimeout(this.dropErrorsTimer)
+    clearTimeout(this.validateTimer)
   }
 
   shouldComponentUpdate(nextProps, nextState, nextContext) {
@@ -49,12 +51,12 @@ class SuperForm extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevProps.value !== this.props.value && this.isControlled) {
+    if ((prevProps.value !== this.props.value) && this.isControlled) {
       this.setState({
         value: this.props.value
       })
     }
-    if (prevProps.errors !== this.props.errors && this.isControlled) {
+    if ((prevProps.errors !== this.props.errors) && this.isControlled) {
       this.setState({
         errors: this.props.errors
       })
@@ -117,7 +119,6 @@ class SuperForm extends React.Component {
   }
 
   handleChange = e => {
-    console.log('e: ', e);
     const { validate, validateOn, index } = this.props
     const { name, value } = e.target
 
@@ -129,21 +130,36 @@ class SuperForm extends React.Component {
     })
 
     if (validateOn === 'change' && validate) {
-      const err = validate({ [name]: value })
-      if (err) {
-        if (typeof err === 'string') {
-          this.setError(name, err)
-        } else if (typeof err === 'object') {
-          this.setErrors(err)
+      clearTimeout(this.validateTimer)
+      this.validateTimer = setTimeout(_ => {
+        const err = validate({
+          [name]: value,
+        })
+
+        if (err) {
+          if (typeof err === 'string') {
+            this.setError(name, err)
+          } else if (typeof err === 'object') {
+            this.setErrors(err)
+          }
+          return false
+        } else {
+          this.unsetError(name)
         }
-        return false
-      } else {
-        this.unsetError(name)
-      }
+      }, 1000)
     }
 
+    this.props.onChange({ name, value }, index, this.state)
+  }
 
-    this.props.onChange({ name, value }, index)
+  handleFocus = e => {
+    clearTimeout(this.dropErrorsTimer)
+    clearTimeout(this.validateTimer)
+    this.dropErrorsTimer = setTimeout(_ => {
+      this.setErrors({})
+    })
+    this.props.onFocus
+      && this.props.onFocus(e)
   }
 
 
@@ -157,6 +173,7 @@ class SuperForm extends React.Component {
       render,
       theme,
       onChange,
+      onFocus,
       Component,
       overrideMap,
       ...other
@@ -177,12 +194,16 @@ class SuperForm extends React.Component {
         item,
         name,
         onChange,
+        onFocus,
         index: this.props.index
-      })
+      }, this.state )
     }
 
     const InputComponent =
-      renderers[modelKey] || renderers[displayType] || renderers[type] || DefaultRenderer
+      renderers[modelKey] // overriden type or Model_KEY
+      || renderers[displayType] // field can have displayType from schema
+      || renderers[type] // global renderer type
+      || DefaultRenderer // default fallback
 
     // console.log('Component: ', Component);
 
@@ -194,6 +215,7 @@ class SuperForm extends React.Component {
         value={value}
         error={error}
         onChange={this.handleChange}
+        onFocus={this.handleFocus}
         setError={this.setError}
         unsetError={this.unsetError}
         theme={theme}
@@ -226,8 +248,8 @@ class SuperForm extends React.Component {
               (renderLabel ? (
                 renderLabel(item, value[item.name])
               ) : (
-                  item.label || item.name
-                )) + ':'
+                  (item.label || item.name) + ':'
+                ))
             )}
             {(!item.fake && item.required) ? (
               <span style={{
@@ -248,47 +270,58 @@ class SuperForm extends React.Component {
   }
 
 
+  renderRow(cells, index){
+    const {RowComponent, rowProps, theme} = this.props
+    const ComputedRow = RowComponent || Row
+    const props = typeof rowProps === 'function' 
+      ? rowProps(cells, this.state, index)
+      : (rowProps || {})
+    return (
+      <ComputedRow 
+        className={cx(props.className, theme.row)} 
+        key={`sf-row-${index}`}
+        {...props}
+      >
+        {cells.map((cell, cindex) => {
+          const formItem = this.getFormItemObject(cell)
+          return this.renderCol(formItem, cindex, cell)
+        })}
+      </ComputedRow>
+    )    
+  }
+
+  renderCol(field, index, cell){
+    const {ColComponent, colProps, theme} = this.props
+    const ComputedCol = ColComponent || Col
+    const props = typeof colProps === 'function' 
+      ? colProps(field, this.state)
+      : (colProps || {})
+    return (
+      <ComputedCol 
+        className={cx(props.className, theme.col)} 
+        key={`sf-col-${index}`}
+        {...props}
+      >
+        {this.renderField(field, index, cell)}
+      </ComputedCol>
+    )
+  }
+
+
   renderForm() {
     const layout = this.$layout
-    // console.log('layout: ', layout);
-    const {
-      theme
-    } = this.props
     return (
       <Fragment>
-        {layout.map((row, index) => {
-          if (Array.isArray(row)) {
-            {/* alert(row) */ }
-            return (
-              <Row key={`sf-row-${index}`} className={cx(theme.row)}>
-                {row.map((cell, cindex) => {
-                  const formItem = this.getFormItemObject(cell)
-                  return (
-                    <Col key={`sf-col-${cindex}`} className={theme.col}>
-                      {this.renderField(formItem, index, cell)}
-                    </Col>
-                  )
-                })}
-              </Row>
-            )
-          } else {
-            const formItem = this.getFormItemObject(row)
-            return (
-              <Row key={`sf-row-${index}`} className={cx(theme.row)}>
-                <Col>
-                  {this.renderField(formItem, index)}
-                </Col>
-              </Row>
-            )
-          }
-        })}
+        {layout.map((row, index) =>
+          this.renderRow(Array.isArray(row) ? row : [row], index)
+        )}
       </Fragment>
     )
   }
 
   render() {
     const {
-      Component = 'form',
+      Component,
       className,
       theme,
       /* eslint-disable rule */
@@ -300,7 +333,6 @@ class SuperForm extends React.Component {
       validate,
       validateOn,
       renderLabel,
-      invalidSubmit,
       onChange,
       overrideMap,
       /* eslint-enable rule */
@@ -329,19 +361,52 @@ class SuperForm extends React.Component {
   }
 }
 
+const noop = f => f
+
 SuperForm.forms = {}
 SuperForm.renderers = {}
 SuperForm.validators = {}
 
 SuperForm.defaultProps = {
-  onChange: f => f,
-  defaultValue: {},
-  value: null,
-  theme: {},
-  errors: {},
-  schema: {},
-  overrideMap: {},
-  invalidSubmit: false,
+  // Main container tag
+  Component: 'form',
+  RowComponent: null,
+  ColComponent: null,
+
+  // Callbacks
+  onChange: noop,
+  onFocus: noop,
+  validate: noop,
+
+
+
+  // UX
+  validateOn: 'change', // submit
+
+  // Values
+  defaultValue: {}, // uncontrolled default value
+  value: null, // controlled value
+  errors: {}, // controller errors
+  schema: {}, // object schema
+  layout: null, // form layout
+
+  overrideMap: {}, // @todo -> overrideType
+  renderField: {}, // complete new renderer including label/comment/parent container
+
+  // Themes
+  theme: {
+    label: '',
+    labelInvalid: '',
+    input: '',
+    inputInvalid: '',
+    comment: '',
+    commentInvalid: '',
+    col: '',
+    row: '',
+    body: '',
+    footer: '',
+    container: '',
+  },
 }
 
 

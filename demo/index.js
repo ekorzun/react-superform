@@ -19,7 +19,7 @@ const X = new Model({
 
 class NumberInput extends React.Component {
   render(){
-    const {value, name, onChange, children} = this.props
+    const {value, name, onChange, onFocus, children} = this.props
     return (
       <div style={{background:'#eeffee'}}>
         <input
@@ -27,6 +27,7 @@ class NumberInput extends React.Component {
           value={value}
           onChange={onChange}
           name={name}
+          onFocus={onFocus}
         />
       </div>
     )
@@ -158,6 +159,12 @@ class App extends React.Component {
     }
   }
 
+  hide = (state, keyMode) => {
+    if(state.age < 21) {
+      return {credit: 1}
+    }
+  }
+
   pushUser = (e) => {
     e && e.preventDefault()
     this.setState({
@@ -174,7 +181,7 @@ class App extends React.Component {
   }
 
 
-  render(){
+  render123123(){
     return (
       <SuperForm 
         onChange={e => {
@@ -224,7 +231,7 @@ class App extends React.Component {
     )
   }
 
-  render22222() {
+  render() {
     const {users} = this.state
     return (
       <form onSubmit={this.handleSubmit}>
@@ -236,7 +243,9 @@ class App extends React.Component {
               key={index}
               index={index}
               schema={this.schema}
+              hidden={this.hide(user)}
               overrideMap={{
+                'credit': () => 'Ввод кредитной карты',
                 'email': 'email',
                 'delete': (props) => (
                   <h3 onClick={e => {
@@ -252,6 +261,7 @@ class App extends React.Component {
               validateOn='change'
               layout={[
                 ['email', 'name', 'age', 'delete'],
+                ['credit']
               ]}
               theme={{
                 container: 'container',
