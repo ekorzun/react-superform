@@ -122,7 +122,7 @@ class App extends React.Component {
     super(props)
     this.state = {
       users: [
-        {name: '', email: 'xxxx', age: 0}
+        {name: '', email: '', age: 0}
       ],
 
       form: {
@@ -162,6 +162,12 @@ class App extends React.Component {
   hide = (state, keyMode) => {
     if(state.age < 21) {
       return {credit: 1}
+    }
+  }
+
+  disable = (state, keyMode) => {
+    if(!state.email) {
+      return {name: 1}
     }
   }
 
@@ -235,6 +241,7 @@ class App extends React.Component {
     const {users} = this.state
     return (
       <form onSubmit={this.handleSubmit}>
+        {JSON.stringify(users)}
         {users.map((user, index) => {
           return (
             <SuperForm
@@ -243,15 +250,38 @@ class App extends React.Component {
               key={index}
               index={index}
               schema={this.schema}
-              hidden={this.hide(user)}
+              isHidden={this.hide(user)}
+              isDisabled={this.disable(user)}
               overrideMap={{
-                'credit': () => 'Ввод кредитной карты',
+                'credit': () => (
+                  <SuperForm
+                    Component='div'
+                    onChange={({name, value}, unusedIndex, creditState) => {
+                      this.handleChange2({
+                        name: 'credit',
+                        value: creditState.value
+                      }, index)
+                    }}
+                    defaultValue={{
+                      number: '111222333444',
+                      cardholder: '',
+                      expire_month: 11,
+                      expire_year: 2020,
+                      cvc: 123,
+                    }}
+                    layout={[
+                      ['number'],
+                      ['expire_month', 'expire_year', 'cvc'],
+                      'cardholder'
+                    ]}
+                  />
+                ),
                 'email': 'email',
                 'delete': (props) => (
                   <h3 onClick={e => {
                     this.handleDeleteClick(props)
                   }}>
-                    УДОЛИТЬ
+                    x
                   </h3>
                 )
               }}
@@ -260,8 +290,9 @@ class App extends React.Component {
               validate={this.validate}
               validateOn='change'
               layout={[
-                ['email', 'name', 'age', 'delete'],
-                ['credit']
+                ['email:4', 'name'],
+                ['age', 'delete:2'],
+                ['credit'],
               ]}
               theme={{
                 container: 'container',
@@ -269,6 +300,7 @@ class App extends React.Component {
                 col: 'col',
                 label: 'label',
                 labelInvalid: 'labelInvalid',
+                labelDisabled: 'labelDisabled',
               }} 
             />
           )

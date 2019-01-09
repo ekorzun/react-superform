@@ -7,18 +7,21 @@ const RowStyle = {
   alignContent: 'stretch'
 }
 
-const ColStyle = {
-  flex: '1'
-}
-
-export const Row = ({children, className}) => (
+export const Row = ({ children, className }) => (
   <div style={RowStyle} className={className}>
     {children}
   </div>
 )
 
-export const Col = ({ children, className}) => (
-  <div style={ColStyle} className={className}>
-    {children}
-  </div>
-)
+export const Col = ({ children, className, width }) => {
+  return (
+    <div 
+      style={{
+        flex: width ? `0 0 ${100 * width / 12}%` : '1'
+      }} 
+      className={className}
+    >
+      {children}
+    </div>
+  )
+}

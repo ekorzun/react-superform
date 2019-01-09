@@ -8,6 +8,15 @@ import {
   uniqId,
 } from './utils'
 
+const pick = (obj, ...keys) => keys.reduce((acc, key) => (
+  acc[key] = obj[key], acc
+), {})
+
+const getInputProps = props => pick(props, '')
+const getContainerProps = props => pick(props, '')
+// const getInputProps = props => pick(props, '')
+// const getInputProps = props => pick(props, '')
+
 class SuperForm extends React.Component {
 
   constructor(props, context) {
@@ -146,7 +155,7 @@ class SuperForm extends React.Component {
         } else {
           this.unsetError(name)
         }
-      }, 1000)
+      }, 333)
     }
 
     this.props.onChange({ name, value }, index, this.state)
@@ -176,6 +185,8 @@ class SuperForm extends React.Component {
       onFocus,
       Component,
       overrideMap,
+      isHidden,
+      isDisabled,
       ...other
     } = this.props
 
@@ -195,6 +206,7 @@ class SuperForm extends React.Component {
         name,
         onChange,
         onFocus,
+        disabled: isDisabled && isDisabled[name],
         index: this.props.index
       }, this.state )
     }
@@ -210,6 +222,7 @@ class SuperForm extends React.Component {
     return (
       <InputComponent
         {...other}
+        disabled={isDisabled && isDisabled[name]}
         name={name}
         item={item}
         value={value}
@@ -229,6 +242,9 @@ class SuperForm extends React.Component {
       theme,
       renderLabel,
       overrideMap,
+      noLabels,
+      noErrors,
+      isDisabled,
     } = this.props
     const { errors, value } = this.state
 
@@ -242,28 +258,35 @@ class SuperForm extends React.Component {
       >
         <label>
           <div
-            className={cx(theme.label, errors[item.name] && theme.labelInvalid)}
+            className={cx(
+              theme.label, 
+              errors[item.name] && theme.labelInvalid,
+              isDisabled && isDisabled[item.name] && theme.labelDisabled
+            )}
           >
-            {!item.fake && (
+            {noLabels ? null : (!item.fake && (
               (renderLabel ? (
-                renderLabel(item, value[item.name])
+                renderLabel(item, value[item.name], this.state)
               ) : (
                   (item.label || item.name) + ':'
                 ))
-            )}
-            {(!item.fake && item.required) ? (
+            ))}
+
+            {noLabels ? null : ((!item.fake && item.required) ? (
               <span style={{
                 color: 'red',
                 fontWeight: 'bold'
               }}>*</span>
-            ) : (null)}
+            ) : (null))}
           </div>
           <div className={cx(theme.input, errors[item.name] && theme.inputInvalid)}>
             {this.renderInput(item, overrideMap[item.name], index)}
           </div>
-          <div className={cx(theme.comment, errors[item.name] && theme.commentInvalid)}>
-            {errors[item.name]}
-          </div>
+          {noErrors ? (null): (
+            <div className={cx(theme.comment, errors[item.name] && theme.commentInvalid)}>
+              {errors[item.name]}
+            </div>
+          )}
         </label>
       </div>
     )
@@ -271,11 +294,16 @@ class SuperForm extends React.Component {
 
 
   renderRow(cells, index){
-    const {RowComponent, rowProps, theme} = this.props
+    const {RowComponent, rowProps, theme, isHidden} = this.props
     const ComputedRow = RowComponent || Row
     const props = typeof rowProps === 'function' 
       ? rowProps(cells, this.state, index)
       : (rowProps || {})
+
+    if (cells.length === 1 && isHidden && isHidden[cells[0].name]) {
+      return null
+    }
+
     return (
       <ComputedRow 
         className={cx(props.className, theme.row)} 
@@ -291,15 +319,20 @@ class SuperForm extends React.Component {
   }
 
   renderCol(field, index, cell){
-    const {ColComponent, colProps, theme} = this.props
+    // console.log('cell: ', cell);
+    const {ColComponent, colProps, theme, isHidden} = this.props
     const ComputedCol = ColComponent || Col
     const props = typeof colProps === 'function' 
       ? colProps(field, this.state)
       : (colProps || {})
+    if (isHidden && (isHidden[cell] || isHidden[field.name])) {
+      return null
+    }
     return (
       <ComputedCol 
         className={cx(props.className, theme.col)} 
         key={`sf-col-${index}`}
+        width={cell.width}
         {...props}
       >
         {this.renderField(field, index, cell)}
@@ -325,6 +358,11 @@ class SuperForm extends React.Component {
       className,
       theme,
       /* eslint-disable rule */
+      overrideRenderField,
+      RowComponent,
+      rowProps,
+      ColComponent,
+      colProps,
       renderer,
       layout,
       onSubmit,
@@ -335,6 +373,10 @@ class SuperForm extends React.Component {
       renderLabel,
       onChange,
       overrideMap,
+      isHidden,
+      isDisabled,
+      noLabels,
+      noErrors,
       /* eslint-enable rule */
       Header,
       children,
@@ -361,7 +403,7 @@ class SuperForm extends React.Component {
   }
 }
 
-const noop = f => f
+const noop = f => {}
 
 SuperForm.forms = {}
 SuperForm.renderers = {}
@@ -373,12 +415,14 @@ SuperForm.defaultProps = {
   RowComponent: null,
   ColComponent: null,
 
+  rowProps: null,
+  colProps: null,
+  renderLabel: null,
+
   // Callbacks
   onChange: noop,
   onFocus: noop,
-  validate: noop,
-
-
+  validate: null,
 
   // UX
   validateOn: 'change', // submit
@@ -389,18 +433,25 @@ SuperForm.defaultProps = {
   errors: {}, // controller errors
   schema: {}, // object schema
   layout: null, // form layout
+  isHidden: null,
+  isDisabled: null,
 
   overrideMap: {}, // @todo -> overrideType
-  renderField: {}, // complete new renderer including label/comment/parent container
+  overrideRenderField: {}, // complete new renderer including label/comment/parent container
 
   // Themes
+  noLabels: false,
+  noErrors: false,
   theme: {
     label: '',
     labelInvalid: '',
+    labelDisabled: '',
     input: '',
     inputInvalid: '',
+    inputDisabled: '',
     comment: '',
     commentInvalid: '',
+    commentDisabled: '',
     col: '',
     row: '',
     body: '',
@@ -426,7 +477,7 @@ SuperForm.setRenderer = (types, Component) => {
         SuperForm.renderers[type] = Component
       } else {
         const { field, model } = type
-        console.log('field, model: ', field, model);
+        // console.log('field, model: ', field, model);
         SuperForm.renderers[`${model}_${field}`] = Component
       }
     })

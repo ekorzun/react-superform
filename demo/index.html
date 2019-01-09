@@ -39,12 +39,30 @@
 
     .label {
       text-transform: uppercase;
-      font-style: italic
+      font-style: italic;
+      position: relative;
     }
 
-    .labelInvalid {
-      color: red !important;
+
+    .labelInvalid:after {
+      content: 'INVALID';
+      display: inline-block;
+      position: absolute;
+      right: 0;
+      transform: rotate(-25deg);
+      color: red;
     }
+
+    .labelDisabled:after {
+      color: grey;
+      content: 'DISABLED';
+      display: inline-block;
+      position: absolute;
+      right: 0;
+      transform: rotate(-25deg);
+    }
+
+    
   </style>
 </head>
 <body>

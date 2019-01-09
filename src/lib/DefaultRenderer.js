@@ -13,6 +13,7 @@ const SuperFormDefaultRenderer = ({
   theme,
   onChange,
   onFocus,
+  disabled,
 }) => {
   switch(item.type) {
     case 'number':
@@ -25,6 +26,7 @@ const SuperFormDefaultRenderer = ({
       return (
         <Component
           {...item}
+          disabled={disabled}
           autoComplete='off'
           name={item.name}
           onChange={onChange}

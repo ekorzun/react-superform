@@ -4,10 +4,18 @@ export const uniqId = () => `superform-${++id}`
 
 export const makeLayout = (layout, schema) => {
   const rlayout = []
-  const makefield = f => schema[f] || {
-    type: f,
-    name: f,
-    fake: true,
+  const makefield = f => {
+    const [name, width] = f.split(':')
+
+    return schema[name] ? {
+      ...schema[name],
+      width,
+    } : {
+      type: name,
+      name,
+      fake: true,
+      width,
+    }
   }
 
   if (layout) {
