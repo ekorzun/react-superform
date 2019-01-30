@@ -17,11 +17,26 @@ const getContainerProps = props => pick(props, '')
 // const getInputProps = props => pick(props, '')
 // const getInputProps = props => pick(props, '')
 
+
+const nearest = (a, n, l) => {
+  if((l = a.length) < 2) {
+    return l - 1
+  }
+  for (var l, p = Math.abs(a[--l] - n); l--;) {
+    if (p < (p = Math.abs(a[l] - n))) {
+      break
+    }
+  }
+  return l + 1
+}
+
+
 class SuperForm extends React.Component {
 
   constructor(props, context) {
     super(props, context)
     this.state = {
+      windowWidth: window.innerWidth,
       errors: props.errors || {},
       value: {
         ...props.defaultValue,
@@ -30,15 +45,35 @@ class SuperForm extends React.Component {
     }
     this.isControlled = (props.value !== undefined) ? true : false
     this.schema = makeSchema(props.schema, this.state.value)
-    this.$layout = makeLayout(props.layout, this.schema)
     this.id = props.id || uniqId()
+
+    this._isResponsive = !Array.isArray(props.layout)
+
+    if (!this._isResponsive) {
+      this.$layouts = {
+        default: makeLayout(props.layout, this.schema)
+      }
+    } else {
+      const breakpoints = Object.keys(props.layout)
+      this.$breakpoints = breakpoints.map(x => ~~x)
+      this.$layouts = breakpoints.reduce((acc, breakpoint, index) => {
+        console.log('breakpoint: ', breakpoint, props.layout[breakpoint]);
+        if(index === 0) {
+          acc.default = makeLayout(props.layout[breakpoint], this.schema)
+        }
+        acc[breakpoint] = makeLayout(props.layout[breakpoint], this.schema)
+        return acc
+      }, {})
+    }
   }
 
   componentDidMount() {
+    this.resizeInit()
     SuperForm.setForm(this)
   }
 
   componentWillUnmount() {
+    this.resizeDestroy()
     SuperForm.unsetForm(this)
     clearTimeout(this.dropErrorsTimer)
     clearTimeout(this.validateTimer)
@@ -70,6 +105,39 @@ class SuperForm extends React.Component {
         errors: this.props.errors
       })
     }
+  }
+
+
+  getLayout = () => {
+    if (!this._isResponsive) {
+      return this.$layouts.default
+    }
+    
+    console.log('this.$breakpoints: ', this.$breakpoints);
+    console.log('nearest(this.$breakpoints, this.$windowWidth): ', nearest(this.$breakpoints, this.state.windowWidth));
+    
+    return this.$layouts[this.$breakpoints[nearest(this.$breakpoints, this.state.windowWidth)]]
+  }
+
+  resizeInit = () => {
+    if(window === undefined) {
+      return
+    }
+    window.addEventListener('resize', this.handleResize)
+  }
+
+  resizeDestroy = () => {
+    if (window === undefined) {
+      return
+    }
+    window.removeEventListener('resize', this.handleResize)
+  }
+
+  handleResize = () => {
+    this.setState({
+      windowWidth: window.innerWidth
+    })
+    console.log('this.$windowWidth: ', this.state.windowWidth);
   }
 
 
@@ -342,7 +410,8 @@ class SuperForm extends React.Component {
 
 
   renderForm() {
-    const layout = this.$layout
+    const layout = this.getLayout()
+    console.log('layout: ', layout);
     return (
       <Fragment>
         {layout.map((row, index) =>

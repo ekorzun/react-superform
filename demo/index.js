@@ -289,11 +289,22 @@ class App extends React.Component {
               onChange={this.handleChange2}
               validate={this.validate}
               validateOn='change'
-              layout={[
-                ['email:4', 'name'],
-                ['age', 'delete:2'],
-                ['credit'],
-              ]}
+              layout={{
+                0: [
+                  'email',
+                  'name',
+                  'age', 
+                  'delete',
+                ],
+                640: [
+                  ['email:4', 'name'],
+                  ['age', 'delete:2'],
+                  ['credit'],
+                ],
+                900: [
+                  ['email:4', 'name', 'age', 'delete:2', 'credit'],
+                ]
+              }}
               theme={{
                 container: 'container',
                 row: 'row',
