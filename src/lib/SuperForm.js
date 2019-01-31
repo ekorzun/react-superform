@@ -27,7 +27,7 @@ const nearest = (a, n, l) => {
       break
     }
   }
-  return l + 1
+  return a[l + 1] > n ? l : l + 1
 }
 
 
@@ -112,11 +112,9 @@ class SuperForm extends React.Component {
     if (!this._isResponsive) {
       return this.$layouts.default
     }
-    
-    console.log('this.$breakpoints: ', this.$breakpoints);
-    console.log('nearest(this.$breakpoints, this.$windowWidth): ', nearest(this.$breakpoints, this.state.windowWidth));
-    
-    return this.$layouts[this.$breakpoints[nearest(this.$breakpoints, this.state.windowWidth)]]
+    const {windowWidth} = this.state
+    const near = nearest(this.$breakpoints, windowWidth)
+    return this.$layouts[this.$breakpoints[near]]
   }
 
   resizeInit = () => {
