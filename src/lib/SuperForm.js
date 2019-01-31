@@ -57,7 +57,7 @@ class SuperForm extends React.Component {
       const breakpoints = Object.keys(props.layout)
       this.$breakpoints = breakpoints.map(x => ~~x)
       this.$layouts = breakpoints.reduce((acc, breakpoint, index) => {
-        console.log('breakpoint: ', breakpoint, props.layout[breakpoint]);
+        // console.log('breakpoint: ', breakpoint, props.layout[breakpoint]);
         if(index === 0) {
           acc.default = makeLayout(props.layout[breakpoint], this.schema)
         }
@@ -135,7 +135,7 @@ class SuperForm extends React.Component {
     this.setState({
       windowWidth: window.innerWidth
     })
-    console.log('this.$windowWidth: ', this.state.windowWidth);
+    // console.log('this.$windowWidth: ', this.state.windowWidth);
   }
 
 
@@ -409,7 +409,7 @@ class SuperForm extends React.Component {
 
   renderForm() {
     const layout = this.getLayout()
-    console.log('layout: ', layout);
+    // console.log('layout: ', layout);
     return (
       <Fragment>
         {layout.map((row, index) =>
