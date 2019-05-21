@@ -224,7 +224,7 @@ class SuperForm extends React.Component {
       }, 333)
     }
 
-    this.props.onChange({ name, value }, index, this.state)
+    this.props.onChange(e, { name, value }, index, this.state)
   }
 
   handleFocus = e => {
