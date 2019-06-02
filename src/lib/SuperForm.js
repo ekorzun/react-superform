@@ -1,11 +1,23 @@
+
+
+// @todo
+// container -> wrapper 
+
+
+
+
+
 import React, { Fragment } from 'react'
 import cx from 'classnames'
 import { Row, Col } from './Grid'
 import DefaultRenderer from './DefaultRenderer'
+import * as validator from './validator'
 import {
   makeSchema,
   makeLayout,
   uniqId,
+  noop,
+  nearest
 } from './utils'
 
 const pick = (obj, ...keys) => keys.reduce((acc, key) => (
@@ -18,20 +30,9 @@ const getContainerProps = props => pick(props, '')
 // const getInputProps = props => pick(props, '')
 
 
-const nearest = (a, n, l) => {
-  if((l = a.length) < 2) {
-    return l - 1
-  }
-  for (var l, p = Math.abs(a[--l] - n); l--;) {
-    if (p < (p = Math.abs(a[l] - n))) {
-      break
-    }
-  }
-  return a[l + 1] > n ? l : l + 1
-}
-
-
 class SuperForm extends React.Component {
+
+  isSuperForm = true
 
   constructor(props, context) {
     super(props, context)
@@ -43,37 +44,50 @@ class SuperForm extends React.Component {
         ...props.value,
       }
     }
-    this.isControlled = (props.value !== undefined) ? true : false
+    this._isControlled = (props.value !== undefined) ? true : false
     this.schema = makeSchema(props.schema, this.state.value)
     this.id = props.id || uniqId()
 
-    this._isResponsive = !Array.isArray(props.layout)
+    this._isResponsive = !!props.layout && !Array.isArray(props.layout)
+    
 
     if (!this._isResponsive) {
       this.$layouts = {
         default: makeLayout(props.layout, this.schema)
       }
     } else {
-      const breakpoints = Object.keys(props.layout)
-      this.$breakpoints = breakpoints.map(x => ~~x)
-      this.$layouts = breakpoints.reduce((acc, breakpoint, index) => {
-        // console.log('breakpoint: ', breakpoint, props.layout[breakpoint]);
-        if(index === 0) {
-          acc.default = makeLayout(props.layout[breakpoint], this.schema)
+      if(props.layout) {
+        const breakpoints = Object.keys(props.layout)
+        this.$breakpoints = breakpoints.map(x => ~~x)
+        this.$layouts = breakpoints.reduce((acc, breakpoint, index) => {
+          // console.log('breakpoint: ', breakpoint, props.layout[breakpoint]);
+          if (index === 0) {
+            acc.default = makeLayout(props.layout[breakpoint], this.schema)
+          }
+          acc[breakpoint] = makeLayout(props.layout[breakpoint], this.schema)
+          return acc
+        }, {})
+      } else {
+        this.$breakpoints = [0]
+        this.$layouts = {
+          default: makeLayout(null, this.schema)
         }
-        acc[breakpoint] = makeLayout(props.layout[breakpoint], this.schema)
-        return acc
-      }, {})
+      }
     }
+
+    // console.log("this.scherma", this.schema)
   }
 
   componentDidMount() {
-    this.resizeInit()
+    this._resizeInit()
     SuperForm.setForm(this)
+    const {onMount} = this.props
+    const {value} = this.state
+    onMount(value)
   }
 
   componentWillUnmount() {
-    this.resizeDestroy()
+    this._resizeDestroy()
     SuperForm.unsetForm(this)
     clearTimeout(this.dropErrorsTimer)
     clearTimeout(this.validateTimer)
@@ -83,7 +97,7 @@ class SuperForm extends React.Component {
     if (this.state !== nextState) {
       return true
     }
-    if (this.isControlled) {
+    if (this._isControlled) {
       if (this.props.value !== nextProps.value) {
         return true
       }
@@ -95,12 +109,12 @@ class SuperForm extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if ((prevProps.value !== this.props.value) && this.isControlled) {
+    if ((prevProps.value !== this.props.value) && this._isControlled) {
       this.setState({
         value: this.props.value
       })
     }
-    if ((prevProps.errors !== this.props.errors) && this.isControlled) {
+    if ((prevProps.errors !== this.props.errors) && this._isControlled) {
       this.setState({
         errors: this.props.errors
       })
@@ -110,21 +124,21 @@ class SuperForm extends React.Component {
 
   getLayout = () => {
     if (!this._isResponsive) {
-      return this.$layouts.default
+      return this.$layouts.default 
     }
-    const {windowWidth} = this.state
+    const { windowWidth } = this.state
     const near = nearest(this.$breakpoints, windowWidth)
     return this.$layouts[this.$breakpoints[near]]
   }
 
-  resizeInit = () => {
-    if(window === undefined) {
+  _resizeInit = () => {
+    if (window === undefined) {
       return
     }
     window.addEventListener('resize', this.handleResize)
   }
 
-  resizeDestroy = () => {
+  _resizeDestroy = () => {
     if (window === undefined) {
       return
     }
@@ -161,15 +175,49 @@ class SuperForm extends React.Component {
     })
   }
 
+  _getFormData = () => {
+    const {schema} = this
+    const {value} = this.state
+    return Object.keys(schema)
+      .filter(fieldname => schema[fieldname].validate)
+      .reduce((acc, fieldname) => {
+        // console.log("schema[fieldname].mergeErrors", schema[fieldname])
+        acc[fieldname] = {
+          value: value[fieldname] || '',
+          validation: schema[fieldname].validate,
+          mergeErrors: schema[fieldname].mergeErrors,
+        }
+        return acc
+      }, {})
+  }
+
   validate = () => {
-    const { validate } = this.props
-    if (!validate) {
-      return true
-    }
-    const errs = validate(this.state.value)
-    if (errs) {
-      if (typeof errs === 'object') {
-        this.setErrors(errs)
+    const { onError } = this.props
+    // if (!validate) {
+    //   return true
+    // }
+    const formData = this._getFormData()
+    // console.log('formData: ', JSON.stringify(formData));
+    if (formData) {
+      const validationResult = validator.validateForm(formData)
+      console.log('validationResult: ', validationResult);
+
+      if (validationResult.errors) {
+        const { errors } = validationResult
+        
+        Object
+          .keys(formData)
+          .filter(name => formData[name].mergeErrors)
+          .forEach(name => {
+            formData[name].mergeErrors
+              .filter(name2 => errors[name2])
+              .forEach(name2 => {
+                errors[name] = (errors[name] || []).concat(errors[name2])
+              })
+          })
+
+        this.setErrors(errors)
+        return false
       }
     }
     return true
@@ -178,16 +226,21 @@ class SuperForm extends React.Component {
   handleSubmit = e => {
     const {
       onSubmit,
-      validate,
+      validateOn
     } = this.props
-    const { value } = this.state
-    const isValid = this.validate()
 
-    if (onSubmit) {
-      e.preventDefault()
-      isValid && onSubmit(value, e)
-    } else if (!isValid) {
-      e.preventDefault()
+    if (validateOn === 'submit') {
+      const { value } = this.state
+      const isValid = this.validate()
+
+      if(!isValid) {
+        e.stopPropagation()
+        e.preventDefault()
+        return false
+      }
+
+      onSubmit(value, e)
+
     }
 
     return true
@@ -196,13 +249,13 @@ class SuperForm extends React.Component {
   handleChange = e => {
     const { validate, validateOn, index } = this.props
     const { name, value } = e.target
+    
+    const newStateValue = {
+      ...this.state.value,
+      [name]: value,
+    }
 
-    this.setState({
-      value: {
-        ...this.state.value,
-        [name]: value,
-      }
-    })
+    this.setState({value: newStateValue})
 
     if (validateOn === 'change' && validate) {
       clearTimeout(this.validateTimer)
@@ -224,7 +277,10 @@ class SuperForm extends React.Component {
       }, 333)
     }
 
-    this.props.onChange(e, { name, value }, index, this.state)
+    this.props.onChange(e, { name, value }, {
+      ...this.state,
+      value: newStateValue
+    }, index)
   }
 
   handleFocus = e => {
@@ -250,9 +306,10 @@ class SuperForm extends React.Component {
       onChange,
       onFocus,
       Component,
-      overrideMap,
+      override,
       isHidden,
       isDisabled,
+      onMount,
       ...other
     } = this.props
 
@@ -274,7 +331,7 @@ class SuperForm extends React.Component {
         onFocus,
         disabled: isDisabled && isDisabled[name],
         index: this.props.index
-      }, this.state )
+      }, this.state)
     }
 
     const InputComponent =
@@ -293,6 +350,8 @@ class SuperForm extends React.Component {
         item={item}
         value={value}
         error={error}
+        errors={errors}
+        namedErrors={errors[name]}
         onChange={this.handleChange}
         onFocus={this.handleFocus}
         setError={this.setError}
@@ -307,9 +366,9 @@ class SuperForm extends React.Component {
     const {
       theme,
       renderLabel,
-      overrideMap,
+      override,
       noLabels,
-      noErrors,
+      noHints,
       isDisabled,
     } = this.props
     const { errors, value } = this.state
@@ -325,12 +384,12 @@ class SuperForm extends React.Component {
         <label>
           <div
             className={cx(
-              theme.label, 
+              theme.label,
               errors[item.name] && theme.labelInvalid,
               isDisabled && isDisabled[item.name] && theme.labelDisabled
             )}
           >
-            {noLabels ? null : (!item.fake && (
+            {(noLabels || item.label === null) ? null : (!item.fake && (
               (renderLabel ? (
                 renderLabel(item, value[item.name], this.state)
               ) : (
@@ -346,11 +405,15 @@ class SuperForm extends React.Component {
             ) : (null))}
           </div>
           <div className={cx(theme.input, errors[item.name] && theme.inputInvalid)}>
-            {this.renderInput(item, overrideMap[item.name], index)}
+            {this.renderInput(item, override[item.name], index)}
           </div>
-          {noErrors ? (null): (
-            <div className={cx(theme.comment, errors[item.name] && theme.commentInvalid)}>
-              {errors[item.name]}
+          {noHints ? (null) : (
+            <div className={cx(theme.hint, errors[item.name] && theme.commentInvalid)}>
+              {
+                Array.isArray(errors[item.name]) || typeof errors[item.name] === 'string'
+                  ? errors[item.name]
+                  : null
+              }
             </div>
           )}
         </label>
@@ -359,10 +422,10 @@ class SuperForm extends React.Component {
   }
 
 
-  renderRow(cells, index){
-    const {RowComponent, rowProps, theme, isHidden} = this.props
+  renderRow(cells, index) {
+    const { RowComponent, rowProps, theme, isHidden } = this.props
     const ComputedRow = RowComponent || Row
-    const props = typeof rowProps === 'function' 
+    const props = typeof rowProps === 'function'
       ? rowProps(cells, this.state, index)
       : (rowProps || {})
 
@@ -371,8 +434,8 @@ class SuperForm extends React.Component {
     }
 
     return (
-      <ComputedRow 
-        className={cx(props.className, theme.row)} 
+      <ComputedRow
+        className={cx(props.className, theme.row)}
         key={`sf-row-${index}`}
         {...props}
       >
@@ -381,22 +444,22 @@ class SuperForm extends React.Component {
           return this.renderCol(formItem, cindex, cell)
         })}
       </ComputedRow>
-    )    
+    )
   }
 
-  renderCol(field, index, cell){
+  renderCol(field, index, cell) {
     // console.log('cell: ', cell);
-    const {ColComponent, colProps, theme, isHidden} = this.props
+    const { ColComponent, colProps, theme, isHidden } = this.props
     const ComputedCol = ColComponent || Col
-    const props = typeof colProps === 'function' 
+    const props = typeof colProps === 'function'
       ? colProps(field, this.state)
       : (colProps || {})
     if (isHidden && (isHidden[cell] || isHidden[field.name])) {
       return null
     }
     return (
-      <ComputedCol 
-        className={cx(props.className, theme.col)} 
+      <ComputedCol
+        className={cx(props.className, theme.col)}
         key={`sf-col-${index}`}
         width={cell.width}
         {...props}
@@ -439,11 +502,12 @@ class SuperForm extends React.Component {
       validateOn,
       renderLabel,
       onChange,
-      overrideMap,
+      override,
       isHidden,
       isDisabled,
       noLabels,
-      noErrors,
+      noHints,
+      onMount,
       /* eslint-enable rule */
       Header,
       children,
@@ -456,6 +520,7 @@ class SuperForm extends React.Component {
         className={cx(theme.container, className)}
         {...other}
       >
+        {/* {JSON.stringify(this.state.value)} */}
         {Header ? <Header /> : null}
         <div className={cx(theme.body)}>
           {this.renderForm()}
@@ -469,8 +534,6 @@ class SuperForm extends React.Component {
     )
   }
 }
-
-const noop = f => {}
 
 SuperForm.forms = {}
 SuperForm.renderers = {}
@@ -487,6 +550,8 @@ SuperForm.defaultProps = {
   renderLabel: null,
 
   // Callbacks
+  onMount: noop,
+  onSubmit: noop,
   onChange: noop,
   onFocus: noop,
   validate: null,
@@ -503,12 +568,12 @@ SuperForm.defaultProps = {
   isHidden: null,
   isDisabled: null,
 
-  overrideMap: {}, // @todo -> overrideType
-  overrideRenderField: {}, // complete new renderer including label/comment/parent container
+  override: {}, // @todo -> overrideType
+  overrideRenderField: {}, // complete new renderer including label/hint/parent container
 
   // Themes
   noLabels: false,
-  noErrors: false,
+  noHints: false,
   theme: {
     label: '',
     labelInvalid: '',
@@ -516,7 +581,7 @@ SuperForm.defaultProps = {
     input: '',
     inputInvalid: '',
     inputDisabled: '',
-    comment: '',
+    hint: '',
     commentInvalid: '',
     commentDisabled: '',
     col: '',
