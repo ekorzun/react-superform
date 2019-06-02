@@ -1,324 +1,124 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import {SuperForm} from '../src/index'
+import './index.setup'
 
-import connect, {Model, setConfig} from 'react-supermodel'
-import Baobab from 'baobab'
-
-const tree = new Baobab({
-  $api: {}
-})
-
-setConfig({tree})
-
-const X = new Model({
-  name: 'xxx',
-  api: {},
-
-})
-
-class NumberInput extends React.Component {
-  render(){
-    const {value, name, onChange, onFocus, children} = this.props
-    return (
-      <div style={{background:'#eeffee'}}>
-        <input
-          type='number'
-          value={value}
-          onChange={onChange}
-          name={name}
-          onFocus={onFocus}
-        />
-      </div>
-    )
-  }
-}
-
-const CNumberInput2 = connect(X)(NumberInput)
-
-const EmailInput = ({
-  value,
-  onChange,
-  name,
-  item,
-}) => {
-  return (
-    <div>
-      <input
-        type='email'
-        placeholder='user@example.com'
-        value={value}
-        onChange={onChange}
-        name={name}
-      />
-    </div>
-  )
-}
-
-
-// SuperForm.setRenderer(['number'], a => <CNumberInput2 {...a} />)
-// SuperForm.setRenderer(['email'], EmailInput)
-
-
-
-
-SuperForm.setRenderer('select', props => {
-  const {item} = props
-  return (
-    <select 
-    value={props.value}
-    name={props.name} onChange={props.onChange}>
-      {item.options.map((opt, i) => 
-        <option value={i} key={i}>{opt}</option>
-      )}
-    </select>
-  )
-})
-
-
-
-SuperForm.setRenderer('custom-email', props => {
-  console.log('props: ', props);
-  return (
-    <div>
-      <h2>КАСТОМНЫЙ ЕМЕЙЛ</h2>
-      <h3>
-        <input 
-          style={{
-            color: 'blue',
-            fontSize: 20
-          }}
-          type='text' 
-          name={props.name}
-          value={props.value}
-          onChange={e => {
-            const {name, value} = e.target
-            props.onChange({
-              target: {
-                name, 
-                value
-              }
-            })
-          }}
-        />
-      </h3>
-    </div>
-  )
-})
+import Form from './superform.default'
+import SCHEMA from './superform.schema'
 
 class App extends React.Component {
 
-  schema = {
-    age: {
-      label: 'Возраст',
-      type: 'number',
-      min: 1,
-      max: 100,
-      required: true,
-    }
-  }
-
-  constructor(props){
-    super(props)
-    this.state = {
-      users: [
-        {name: '', email: '', age: 0}
-      ],
-
-      form: {
-        name: '',
-        email: '',
-        age: 18,
-        sex: '2'
+  state = {
+    value: {
+      card: {
+        number: ""
       }
     }
   }
 
-  handleChange2 = ({name, value}, index) => {
-    const users = this.state.users.slice(0)
-    users[index][name] = value
-    this.setState({
-      users
-    })
-  }
-
-  handleSubmit = (e) => {
-    e && e.preventDefault()
-    alert(JSON.stringify(this.state))
-  }
-
-  validate2222 = (data, keyMode) => {
-    if(data.age < 21) {
-      return "Нелья быть младше 21"
-    }
-  }
-
-  validate = (data, keyMode) => {
-    if(data.age < 21) {
-      return {age: "Нелья быть младше 21"}
-    }
-  }
-
   hide = (state, keyMode) => {
-    if(state.age < 21) {
-      return {credit: 1}
+    if (state.age < 21) {
+      return { credit: 1 }
     }
   }
 
   disable = (state, keyMode) => {
-    if(!state.email) {
-      return {name: 1}
+    if (!state.email) {
+      return { name: 1 }
     }
   }
 
   pushUser = (e) => {
     e && e.preventDefault()
     this.setState({
-      users: [...this.state.users, {name:'', email: '', age: 0}]
+      users: [...this.state.users, { name: '', email: '', age: 0 }]
     })
   }
 
   handleDeleteClick = props => {
-    const {users} = this.state
-    const {index} = props
+    const { users } = this.state
+    const { index } = props
     this.setState({
       users: users.filter((user, i) => i !== index)
     })
   }
 
+  handleChangeNew = (e, payload, state) => {
+    const {value} = this.state
+    this.setState({
+      value: {
+        ...value,
+        [payload.name]: payload.value
+      }
+    })
+  }
 
-  render123123(){
-    return (
-      <SuperForm 
-        onChange={e => {
-          const {name, value} = e
-          this.setState({
-            form: {
-              ...this.state.form,
-              [name]: value
-            }
-          })
-        }}
-        onSubmit={e => {
-          alert(JSON.stringify(
-            e, null, 2
-          ))
-        }}
-        schema={{
-          name: {
-            required: true,
-            label: 'Введите ваше имя',
-          },
-          email: {
-            type: 'custom-email',
-          },
-          sex: {
-            type: 'select',
-            label: 'Пол',
-            options: ['выберете', 'женский', 'мужской']
-          }
-        }}
-        overrideMap={{
-          email: 'string'
-        }}
-        value={this.state.form}
-        theme={{
-          container: 'container',
-          row: 'row',
-          col: 'col',
-          label: 'label',
-          labelInvalid: 'labelInvalid',
-        }} 
 
-      >
-        {JSON.stringify(this.state.form)}
-        <button type='submit'>Отправить</button>
-      </SuperForm>
-    )
+  getHiddenFields = () => {
+    const { isBillingAddressDifferent } = this.state
+    if (!isBillingAddressDifferent) {
+      return { billing_address: true}
+    }
   }
 
   render() {
-    const {users} = this.state
+    const { value } = this.state
     return (
-      <form onSubmit={this.handleSubmit}>
-        {JSON.stringify(users)}
-        {users.map((user, index) => {
-          return (
-            <SuperForm
-              Component='div'
-              className='animated fadeInUp'
-              key={index}
-              index={index}
-              schema={this.schema}
-              isHidden={this.hide(user)}
-              isDisabled={this.disable(user)}
-              overrideMap={{
-                'credit': () => (
-                  <SuperForm
-                    Component='div'
-                    onChange={({name, value}, unusedIndex, creditState) => {
-                      this.handleChange2({
-                        name: 'credit',
-                        value: creditState.value
-                      }, index)
-                    }}
-                    defaultValue={{
-                      number: '111222333444',
-                      cardholder: '',
-                      expire_month: 11,
-                      expire_year: 2020,
-                      cvc: 123,
-                    }}
-                    layout={[
-                      ['number'],
-                      ['expire_month', 'expire_year', 'cvc'],
-                      'cardholder'
-                    ]}
-                  />
-                ),
-                'email': 'email',
-                'delete': (props) => (
-                  <h3 onClick={e => {
-                    this.handleDeleteClick(props)
-                  }}>
-                    x
-                  </h3>
-                )
-              }}
-              value={user}
-              onChange={this.handleChange2}
-              validate={this.validate}
-              validateOn='change'
-              layout={{
-                0: [
-                  'email',
-                  'name',
-                  'age', 
-                  'delete',
-                ],
-                640: [
-                  ['email:4', 'name'],
-                  ['age', 'delete:2'],
-                  ['credit'],
-                ],
-                900: [
-                  ['email:4', 'name', 'age', 'delete:2', 'credit'],
-                ]
-              }}
-              theme={{
-                container: 'container',
-                row: 'row',
-                col: 'col',
-                label: 'label',
-                labelInvalid: 'labelInvalid',
-                labelDisabled: 'labelDisabled',
-              }} 
-            />
-          )
-        })}
-        <button onClick={this.pushUser}>+</button>
-        <button type='submit'>SAVE</button>
-      </form>
+      <div>
+        <pre className='debug'>
+          {JSON.stringify(value, null, 2)}
+        </pre>
+        <Form
+          schema={SCHEMA}
+          onChange={this.handleChangeNew}
+          onSubmit={this.handleSubmit}
+          defaultValue={value}
+          isHidden={this.getHiddenFields()}
+          layout={[
+            'header_contact',
+            ['name', 'fname', 'mname'],
+            ['phone'],
+            'header_billing',
+            ['card', 'address'],
+            'different_address',
+            'billing_address',
+          ]}
+          
+          override={{
+            gender: 'radio',
+            different_address: () => <label><input type='checkbox' onChange={e => this.setState({ isBillingAddressDifferent: e.target.checked})} /> Платежный адрес отличается</label>,
+            header_billing: () => <h2>Платежная инфа</h2>,
+            header_contact: () => <h2>Контактная инфа</h2>,
+
+            floating_xer: () => {
+              return (
+                <div style={{
+                  position: 'absolute',
+                  width: 50,
+                  height: 50,
+                  borderRadius: 10,
+                  background: 'red',
+                  color: 'white',
+                  top: 30,
+                  right: 30
+                }}
+                onClick={e => {
+                  this.handleChangeNew(e, {
+                    name: 'red-xer-clicked',
+                    value: 1
+                  })
+                }}
+                >
+                +
+                </div>
+              )
+            }
+          }}
+        >
+          <button type='submit'>
+            Отправить
+          </button>
+        </Form>
+      </div>
     )
   }
 }
