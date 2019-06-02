@@ -2,6 +2,20 @@
 let id = +new Date
 export const uniqId = () => `superform-${++id}`
 
+export const noop = f => { }
+
+export const nearest = (a, n, l) => {
+  if ((l = a.length) < 2) {
+    return l - 1
+  }
+  for (var l, p = Math.abs(a[--l] - n); l--;) {
+    if (p < (p = Math.abs(a[l] - n))) {
+      break
+    }
+  }
+  return a[l + 1] > n ? l : l + 1
+}
+
 export const makeLayout = (layout, schema) => {
   const rlayout = []
   const makefield = f => {
