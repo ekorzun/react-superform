@@ -1,6 +1,6 @@
 {
   "name": "react-superforms",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "homepage": "https://github.com/ekorzun/react-superform",
   "author": {
     "name": "Evgeny Korzun",
@@ -11,11 +11,11 @@
     "type": "git",
     "url": "https://github.com/ekorzun/react-superform.git"
   },
-  "main": "dist/index.js",
+  "main": "build/index.js",
   "scripts": {
     "prepublish": "yarn build",
     "prebuild": "rm -rf ./dist && mkdir dist",
-    "build": "parcel build src/index.js --out-dir dist",
+    "build": "babel src -d build",
     "dev": "parcel serve demo/index.html",
     "test": "nyc mocha --timeout 30000 -R spec --require babel-register test/*.spec.js",
     "pretest": "yarn run build"
@@ -24,6 +24,7 @@
     "dist"
   ],
   "dependencies": {
+    "@babel/cli": "^7.4.4",
     "baobab": "^2.5.2",
     "classnames": "^2.2.6"
   },
