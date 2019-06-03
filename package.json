@@ -1,6 +1,6 @@
 {
   "name": "react-superforms",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "homepage": "https://github.com/ekorzun/react-superform",
   "author": {
     "name": "Evgeny Korzun",
@@ -21,7 +21,8 @@
     "pretest": "yarn run build"
   },
   "files": [
-    "dist"
+    "dist",
+    "build"
   ],
   "dependencies": {
     "@babel/cli": "^7.4.4",
