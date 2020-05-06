@@ -1,17 +1,10 @@
 
-
-// @todo
-// container -> wrapper 
-
-
-
-
-
-import React, { Fragment } from 'react'
+import React, { Component,  Fragment,useMemo, useState, useCallback} from 'react'
 import cx from 'classnames'
+
 import { Row, Col } from './Grid'
-import DefaultRenderer from './DefaultRenderer'
 import * as validator from './validator'
+
 import {
   makeSchema,
   makeLayout,
@@ -19,6 +12,257 @@ import {
   noop,
   nearest
 } from './utils'
+
+const cm = {}
+const renderers = {}
+
+const useSchema = (state, layout, schema) => {
+  return useMemo(() => {
+    console.log('useSchema: ');
+    return schema
+  }, [schema])
+}
+
+const useLayout = (state, layout, schema) => {
+  return useMemo(() => {
+    return makeLayout(layout, schema)
+  }, [schema])
+}
+
+
+const SuperFormInput = ({
+  field,
+  value,
+  name,
+  override,
+  overrideDisplayType,
+  overrideType,
+  overrideRenderField,
+}, ...props) => {
+  const {type, displayType} = field
+  const InputComponent =
+    renderers[overrideDisplayType[displayType]] //
+    || renderers[overrideType[type]] //
+    || renderers[displayType] // field can have displayType from schema
+    || renderers[type] // global renderer type
+    || 'input' // default fallback
+
+  return (
+    <InputComponent 
+      {...props}
+      value={value}
+      name={name}
+      field={field}
+    />
+  )
+}
+
+const SuperFormField = (props) => {
+
+  const {
+    field,
+    theme,
+    errors = {},
+    disabled,
+    value,
+    warnings,
+    noLabels,
+    noHints,
+    renderLabel,
+    override,
+    overrideDisplayType,
+    overrideType,
+    overrideRenderField,
+    colIndex,
+    rowIndex,
+    ...other
+  } = props
+  
+  const error = typeof errors === 'string'
+    ? errors === field.name
+      ? true
+      : false
+    : Array.isArray(errors)
+      ? errors.indexOf(field.name) > -1
+      : errors[field.name]
+  const hasError = !!error
+  const isDisabled = disabled
+  const isHidden = false
+
+  return (
+
+      <label 
+        className={cx(
+          cm.field, 
+          theme.field,
+          hasError && theme.fieldInvalid,
+          isDisabled && theme.fieldDisabled
+        )}
+      >
+        <div
+          className={cx(
+            cm.label,
+            theme.label,
+            hasError && theme.labelInvalid,
+            isDisabled && theme.labelDisabled
+          )}
+        >
+          
+          {field.label}
+
+          {/* {(noLabels || item.label === null) ? null : (!item.fake && (
+            (renderLabel ? (
+              renderLabel(item, value[item.name], this.state)
+            ) : (
+                (item.label || item.name) + ':'
+              ))
+          ))} */}
+
+          {/* {noLabels ? null : ((!item.fake && item.required) ? (
+            <span style={{
+              color: 'red',
+              fontWeight: 'bold'
+            }}>*</span>
+          ) : (null))} */}
+        </div>
+
+        <div 
+          className={cx(
+            theme.input, 
+            hasError && theme.inputInvalid
+          )}
+        >
+          <If condition={!isHidden}>
+            <SuperFormInput 
+              hasError={hasError}
+              isDisabled={isDisabled}
+              overrideDisplayType={overrideDisplayType}
+              overrideType={overrideType}
+              overrideRenderField={overrideRenderField}
+              field={field}
+              error={error}
+              value={value}
+              name={name}
+              onChange={e => e}
+            />
+          </If>
+        </div>
+        {/* {noHints ? (null) : (
+          <div className={cx(theme.hint, errors[item.name] && theme.commentInvalid)}>
+            {
+              Array.isArray(errors[item.name]) || typeof errors[item.name] === 'string'
+                ? errors[item.name]
+                : null
+            }
+          </div>
+        )} */}
+      </label>
+  )
+}
+
+
+const SuperFormBase = ({
+  // layout,
+  // schema,
+  defaultValue,
+  value,
+  hidden,
+  id = uniqId(),
+  children,
+  theme = {},
+
+  // global props
+  disabled,
+  invalid,
+  valid,
+  loading,
+  warning,
+  errors,
+
+  // Data structure
+
+  // Dataflow
+  validateOn,
+
+  // Extra Components
+  Footer,
+  Header,
+  Actions,
+
+  // renderers
+  renderLabel,
+
+  // Callbacks
+  onValidate,
+  onError,
+  onFocus = noop,
+  onBlur = noop,
+  onChange = noop,
+  onSubmit = noop,
+
+  ...other
+}) => {
+  const isControlled = value !== undefined
+  const [state, setState] = useState({ ...value, ...defaultValue })
+  const [_errors, setErrors] = useState(errors)
+
+  const schema = useSchema(state, other.layout, other.schema)
+  console.log('schema: ', schema);
+  const layout = useLayout(state, other.layout, other.schema)
+  console.log('layout: ', layout);
+
+  const handleChange = useCallback(() => {
+    onChange(state)
+  }, [state])
+
+  const handlers = useMemo(() => ({
+    onChange: handleChange,
+  }), [])
+
+  return (
+    <div>
+      <Fragment>
+        {layout.map((row, rowIndex) => (
+          <Row
+            key={rowIndex}
+          >
+            {(Array.isArray(row) ? row : [row]).map((col, colIndex) => (
+              <Col key={colIndex}>
+                <SuperFormField
+                  {...handlers}
+                  theme={theme}
+                  disabled={disabled}
+                  hidden={hidden}
+                  loading={loading}
+                  warning={warning}
+                  invalid={invalid}
+                  valid={valid}
+                  name={col.name}
+                  value={state[col.name]}
+                  state={state}
+                  rowIndex={rowIndex}
+                  colIndex={colIndex}
+                  col={col}
+                  field={schema[col.name]}
+                  {...other}
+                />
+              </Col>
+            ))}
+          </Row>
+        ))}
+      </Fragment>
+
+    </div>
+  )
+}
+
+class SuperForm extends Component {
+  render(){
+    return <SuperFormBase {...this.props} />
+  }
+}
+
+
 
 const pick = (obj, ...keys) => keys.reduce((acc, key) => (
   acc[key] = obj[key], acc
@@ -30,7 +274,7 @@ const getContainerProps = props => pick(props, '')
 // const getInputProps = props => pick(props, '')
 
 
-class SuperForm extends React.Component {
+class SuperForm222 extends React.Component {
 
   isSuperForm = true
 
@@ -570,6 +814,8 @@ SuperForm.defaultProps = {
 
   override: {}, // @todo -> overrideType
   overrideRenderField: {}, // complete new renderer including label/hint/parent container
+  overrideDisplayType: {},
+  overrideType: {},
 
   // Themes
   noLabels: false,

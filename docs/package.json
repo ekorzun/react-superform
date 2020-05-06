@@ -1,0 +1,15 @@
+{
+  "name": "docs",
+  "description": "",
+  "dependencies": {
+    "catalog": "^3.6.0",
+    "docz": "^2.2.0",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-superforms": "^2.0.3"
+  },
+  "scripts": {
+    "catalog-start": "catalog start",
+    "catalog-build": "catalog build"
+  }
+}

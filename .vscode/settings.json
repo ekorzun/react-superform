@@ -1,3 +1,7 @@
 {
-  "deepscan.enable": true
+  "deepscan.enable": true,
+  "javascript.validate.enable": false,
+  "cSpell.words": [
+    "superform"
+  ]
 }

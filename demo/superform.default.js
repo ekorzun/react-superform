@@ -1,6 +1,6 @@
 import React from 'react'
-import { SuperForm } from '../src/index'
-import './superform.setup.renderers'
+import SuperForm from '../src/index'
+
 
 export default props => (
   <SuperForm
