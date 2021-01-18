@@ -12,7 +12,8 @@ const SuperFormLayout = ({
   state,
   ...other
 }: {
-  layout: ILayout
+  layout: ILayout,
+  [key:string]: any
 }) => {
   return (
     <Fragment>
@@ -22,7 +23,7 @@ const SuperFormLayout = ({
         >
           {row
 
-            .map((col, colIndex) => (
+            .map((col: any, colIndex: any) => (
             <Col
               key={colIndex}
               width={col.width}

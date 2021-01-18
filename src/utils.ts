@@ -15,6 +15,7 @@ export const noop = () => { }
 /**
  * 
  */
+// @ts-ignore
 export const nearest = (a, n, l) => {
   if ((l = a.length) < 2) {
     return l - 1
@@ -30,10 +31,10 @@ export const nearest = (a, n, l) => {
 
 const LAYOUT_REGEXP = /^([\w\d]+)\:?(\d+)?/i
 
-export const makeLayout = (layout, schema) => {
-  const resultLayout = []
+export const makeLayout = (layout: any, schema: any) => {
+  const resultLayout = [] as any[]
 
-  const makeField = fieldname => {
+  const makeField = (fieldname: any) => {
     const [src, name, width = 0] = fieldname.match(LAYOUT_REGEXP)
 
     if (schema && schema[name] !== undefined) {
@@ -54,7 +55,7 @@ export const makeLayout = (layout, schema) => {
   }
 
   if (layout) {
-    layout.forEach(field => {
+    layout.forEach((field: any) => {
       if (Array.isArray(field)) {
         resultLayout.push(field.map(f =>
           makeField(f)
@@ -74,9 +75,13 @@ export const makeLayout = (layout, schema) => {
   return resultLayout
 }
 
-const getSchemaFieldType = (fieldObj, value) => {
+// @ts-ignore
+const getSchemaFieldType = (
+  fieldObj: any,
+  value: any
+) => {
 
-  if(Array.isArray(fieldObj)) {
+  if (Array.isArray(fieldObj)) {
     return {
       type: 'array',
       of: getSchemaFieldType(fieldObj[0], value)
@@ -99,20 +104,20 @@ const getSchemaFieldType = (fieldObj, value) => {
 }
 
 
-export const makeSchema = (schema, formValue) => {
-  const rschema = {}
+export const makeSchema = (schema: any, formValue: any) => {
+  const rschema = {} as {[key:string]:any}
   if (formValue) {
     Object
       .keys(formValue)
-      .forEach(name => {
+      .forEach((name: any) => {
         const type = getSchemaFieldType(formValue[name], formValue)
-        
+
         if (typeof type === 'string') {
-          rschema[name] = {name, type}
+          rschema[name] = { name, type }
         } else {
           rschema[name] = { name, ...type }
 
-          if (!rschema[`__${type.of}`])  {
+          if (!rschema[`__${type.of}`]) {
             rschema[`__${type.of}`] = makeSchema(null, formValue[name][0])
             rschema[`__${type.of}`].__ignore = true
           }
@@ -175,10 +180,10 @@ export const makeSchema = (schema, formValue) => {
   return rschema
 }
 
-export const importField = (field) => {
+export const importField = (field: any) => {
 
 }
 
-export const exportField = (field) => {
+export const exportField = (field: any) => {
 
 }

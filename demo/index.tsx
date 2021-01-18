@@ -36,6 +36,7 @@ const Code = styled.div`
   padding: 1rem;
 `
 
+// @ts-ignore
 const Form = ({title, onChange, ...props}) => {
   const [state, setState] = useState({})
   return (
@@ -43,7 +44,7 @@ const Form = ({title, onChange, ...props}) => {
       {title && <h1>{title}</h1>}
       <div>
         <SuperForm 
-          onChange={e => {
+          onChange={(e:any) => {
             setState(() => e.target.value)
             onChange && onChange(e)
           }}
@@ -73,7 +74,7 @@ const App = () => {
 
   return (
     <div>
-
+      {/* @ts-ignore */}
       <Form
         title='default'
         defaultValue={{
@@ -84,7 +85,8 @@ const App = () => {
 
       <hr />
 
-      <Form
+      {/* @ts-ignore */}
+      {/* <Form
         title='Array'
         defaultValue={{
           FIO: '',
@@ -93,13 +95,22 @@ const App = () => {
             count: 1,
           }]
         }}
-      />
+      /> */}
 
       <hr />
 
+      {/* @ts-ignore */}
       <Form
         title='default nested'
         noLabels
+        schema={{
+          age: {
+            type: 'number',
+            getValue: (e:any) => {
+              return Number(e.target.value)
+            }
+          }
+        }}
         layout={[
           ['name', 'age'],
           ['offset', 'card'],
@@ -136,7 +147,7 @@ const App = () => {
           ['name', 'age'],
           ['offset', 'card'],
         ]}
-        onChange={e => {
+        onChange={(e:any) => {
           setNestedState(e.target.value)
         }}
         value={nestedState}

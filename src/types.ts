@@ -17,7 +17,7 @@ export type IField = {
 }
 
 export type IFieldRender = {
-  theme: ITheme
+  theme ?: ITheme
 }
 
 export type IFieldEvents = {

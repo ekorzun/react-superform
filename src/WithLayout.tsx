@@ -26,10 +26,10 @@ export const WithLayout = ({
   return children(layout)
 }
 
-export default props => {
+export default (props: any) => {
   return (
-    <WithLayout layout={layout}>
-      {({ layout }) => {
+    <WithLayout>
+      {({ layout }: any) => {
         return (
           WithLayout
         )

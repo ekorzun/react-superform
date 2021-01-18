@@ -1,3 +1,5 @@
+
+
 import * as React from 'react'
 const { Fragment, useEffect, useMemo, useState, useCallback } = React
 
@@ -15,24 +17,28 @@ import { setRenderer } from './renderers'
 import { ITheme } from './types'
 
 
+type IAny = {
+  [key:string]: any
+}
+
 setRenderer('string', ({
   onChange,
   value,
   name,
-}) => <input name={name} value={value} onChange={onChange} />)
+}: IAny) => <input name={name} value={value} onChange={onChange} />)
 
 setRenderer('number', ({
   onChange,
   value,
   name,
-}) => <input type='number' name={name} value={value} onChange={onChange} />)
+}: IAny) => <input type='number' name={name} value={value} onChange={onChange} />)
 
 setRenderer(['object'], ({
   onChange,
   value,
   name,
   schema
-}) => (
+}: IAny) => (
   <SuperForm
     name={name}
     schema={schema}
@@ -41,61 +47,62 @@ setRenderer(['object'], ({
   />
 ))
 
-const useArrayOf = (field, schema, onChange) => {
+
+const useArrayOf = (field: any, schema: any, onChange: any) => {
   // console.log('field', schema[`__${field.of}`])
   return useMemo(() => {
-  const subschema = schema[`__${field.of}`]
-  return {
-    subschema,
-    push: (Value) => {
-      const newItem = Object.values(subschema)
-        .filter(p => p.defaultValue !== undefined)
-        .reduce((acc, prop) => {
-          acc[prop.name] = prop.defaultValue
-          return acc
-        }, {})
+    const subschema = schema[`__${field.of}`]
+    return {
+      subschema,
+      push: (Value: any) => {
+        const newItem = Object.values(subschema)
+          .filter((p: any) => p.defaultValue !== undefined)
+          .reduce((acc: any, prop: any) => {
+            acc[prop.name] = prop.defaultValue
+            return acc
+          }, {})
 
-      console.log(newItem)
+        console.log(newItem)
 
-      onChange({
-        type: 'add',
-        name: field.name,
-        target: {
+        onChange({
+          type: 'add',
           name: field.name,
-          value: [...(Value || []), newItem],
-        },
-      })
-    },
-    update: (e, Value, index) => {
-      const { name, value: itemValue } = e.target
-      const newValue = Value.map((item, i) => {
-        return i !== index ? item : {
-          ...item,
-          ...itemValue
-        }
-      })
-      
-      onChange({
-        index,
-        type: 'update',
-        target: {
-          name,
-          value: newValue
-        },
-      })
-    },
-    remove: (Value, index) => {
-      onChange({
-        type: 'remove',
-        name: field.name,
-        target: {
+          target: {
+            name: field.name,
+            value: [...(Value || []), newItem],
+          },
+        })
+      },
+      update: (e: any, Value: any, index: any) => {
+        const { name, value: itemValue } = e.target
+        const newValue = Value.map((item: any, i: any) => {
+          return i !== index ? item : {
+            ...item,
+            ...itemValue
+          }
+        })
+
+        onChange({
+          index,
+          type: 'update',
+          target: {
+            name,
+            value: newValue
+          },
+        })
+      },
+      remove: (Value: any, index: any) => {
+        onChange({
+          type: 'remove',
           name: field.name,
-          value: Value.filter((x, i) => i !== index)
-        },
-      })
+          target: {
+            name: field.name,
+            value: Value.filter((x: any, i: any) => i !== index)
+          },
+        })
+      }
+
     }
-
-  }
   }, [field, schema])
 }
 
@@ -105,7 +112,7 @@ setRenderer('array', ({
   name,
   field,
   schema,
-}) => {
+}: IAny) => {
 
   const {
     push,
@@ -116,7 +123,7 @@ setRenderer('array', ({
 
   return (
     <Fragment>
-      {(Value || []).map((v, index) => {
+      {(Value || []).map((v: any, index: any) => {
         return (
           <div key={index}>
 
@@ -132,7 +139,7 @@ setRenderer('array', ({
               index={index}
               schema={subschema}
               value={v}
-              onChange={e => {
+              onChange={(e: any) => {
                 update(e, Value, index)
               }}
             />
@@ -145,16 +152,16 @@ setRenderer('array', ({
       }}>+ new item</button>
     </Fragment>
   )
-}
+})
 
 
-const useSchema = (schema, state) => {
+const useSchema = (schema: any, state: any) => {
   return useMemo(() => {
     return makeSchema(schema, state)
   }, [schema, state])
 }
 
-const useLayout = (layout, schema) => {
+const useLayout = (layout: any, schema: any) => {
   return useMemo(() => {
     return makeLayout(layout, schema)
   }, [schema])
@@ -176,7 +183,8 @@ const SuperForm = ({
   noLabels,
 
 }: {
-  theme: ITheme
+  [key:string]: any,
+  theme ?: ITheme
 }) => {
 
   const isControlled = value !== undefined
@@ -203,7 +211,7 @@ const SuperForm = ({
   }
 
   const handlers = {
-    onChange: (eventLike) => {
+    onChange: (eventLike: any, field: any) => {
       console.log('onChange', eventLike)
       const { target } = eventLike
       if (isControlled) {
@@ -212,7 +220,7 @@ const SuperForm = ({
             name,
             value: {
               ...value,
-              [target.name]: target.value
+              [target.name]: field?.getValue?.(eventLike, field) || target.value
             }
           }
         })
@@ -220,10 +228,11 @@ const SuperForm = ({
 
       if (target) {
         const { name: targetName, value: targetValue } = target
-        setState(prevState => {
+        setState((prevState: any) => {
           return {
             ...prevState,
-            [targetName]: targetValue
+            [targetName]: field?.getValue?.(eventLike, field) || target.value
+            // targetValue
           }
         })
       }
@@ -233,9 +242,9 @@ const SuperForm = ({
 
   return (
     <div style={{
-      border: isControlled ? '1px solid' : false
+      border: isControlled ? '1px solid' : 0
     }}>
-      <WithLayout layout={_layout}>
+      <WithLayout>
         {() => (
           <Layout
             layout={_layout}

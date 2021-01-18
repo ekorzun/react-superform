@@ -1,11 +1,11 @@
 import * as React from 'react'
 import cx from 'classnames'
-import { IField, IFieldRender, IFieldEvents } from './types'
+import { IField, IFieldRender, IFieldEvents, ITheme } from './types'
 import Input from './Input'
 
 
 const SuperFormField = ({
-  theme,  
+  theme = {} as ITheme,  
   disabled,
   field,
   state,
@@ -27,6 +27,8 @@ const SuperFormField = ({
   noHints ?: boolean
   disabled ?: boolean
   handlers?: IFieldEvents
+} & {
+  [key:string]: any
 }) => {
 
 
@@ -62,7 +64,7 @@ const SuperFormField = ({
               isDisabled && theme.labelDisabled
             )}
           >
-            {field && field.name}
+            {field?.label || field?.name}
           </div>
         )}
 

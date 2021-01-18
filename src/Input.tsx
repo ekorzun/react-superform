@@ -3,22 +3,34 @@ import { IField, IFieldRender, IFieldEvents } from './types'
 import { renderers } from './renderers'
 
 const SuperFormInput = ({
-  field = {},
+  field,
   handlers,
   state,
+  colIndex,
+  rowIndex,
   ...other
 }:{
   handlers: undefined | IFieldEvents
   field: IField
   colIndex: number
   rowIndex: number
+} & {
+  [key:string]: any
 }) => {
+  
   const {type, name} = field
+  console.log("const {type, name} = field", type, name)
   const value = state[name]
+  
 
   const render = (
+    // Array of Inputs
     type === 'array'
-      ? renderers[`arrayOf${field.of}`] || renderers[type]
+      ? 
+        // arrayOfType - custom 
+        renderers[`arrayOf${field.of}`] 
+        // default
+        || renderers[type]
       : renderers[type]
   )
 
@@ -27,7 +39,12 @@ const SuperFormInput = ({
     field,
     ...field,
     ...handlers,
-    ...other
+    ...other,
+    onChange: (e:any) => {
+      handlers
+        ?.onChange
+        ?.(e, field, rowIndex, colIndex)
+    }
   }) || `Unsupported input type ${type}`
 }
 
