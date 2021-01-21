@@ -6,6 +6,7 @@
     "jsx": "react",
     "incremental": true,
     "experimentalDecorators": true,
-    "lib": ["dom", "es2015"]
+    "lib": ["dom", "es2015"],
+    "outDir": "./build"
   }
 }
