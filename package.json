@@ -1,6 +1,6 @@
 {
   "name": "react-superforms",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "homepage": "https://github.com/ekorzun/react-superform",
   "author": {
     "name": "Evgeny Korzun",
@@ -16,7 +16,7 @@
     "prebuild": "rm -rf ./dist && mkdir dist",
     "build": "NODE_ENV=production tsc src/*.ts src/*.tsx --jsx react --outDir dist",
     "prepublish": "npm run build",
-    "dev": "next",
+    "dev": "next -p 3001",
     "demo": "parcel serve demo/index.html",
     "test": "jest --coverage",
     "test:watch": "jest --watch"
