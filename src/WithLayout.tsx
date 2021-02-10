@@ -9,6 +9,10 @@ export const WithLayout = ({
   children: Function
 }) => {
 
+  if(typeof window === 'undefined') {
+    return children
+  }
+
   const [width, setWidth] = useState(window.innerWidth)
   const [layout, setLayout] = useState([])
   const __isResponsive = false

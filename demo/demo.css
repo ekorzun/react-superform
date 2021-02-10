@@ -1,0 +1,74 @@
+* {
+      box-sizing: border-box
+    }
+
+    body {
+      background: #fafafa
+    }
+
+    .container {
+      width: 60%;
+      max-width: 640px;
+      margin: 20px auto;
+      border-radius: 3px;
+      background: #eee;
+      padding: 30px
+    }
+
+    .row {
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+      background: rgba(255, 255, 255, .3)
+    }
+
+    .col {
+      padding: 10px;
+      background: rgba(33, 33, 33, .1);
+      padding-bottom: 30px
+    }
+
+    .label {
+      text-transform: uppercase;
+      font-style: italic;
+      position: relative;
+    }
+
+
+    .labelInvalid:after {
+      content: 'INVALID';
+      display: inline-block;
+      position: absolute;
+      right: 0;
+      transform: rotate(-25deg);
+      color: red;
+    }
+
+    .labelDisabled:after {
+      color: grey;
+      content: 'DISABLED';
+      display: inline-block;
+      position: absolute;
+      right: 0;
+      transform: rotate(-25deg);
+    }
+
+    .hint {
+      position: absolute;
+      margin-top: 5px;
+    }
+
+    .hint-micro {
+      position: absolute;
+      margin-top: 5px;
+      font-size: 10px;
+    }
+
+    .debug {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #fff;
+      padding: 10px;
+      
+    }

@@ -2,12 +2,17 @@ import * as React from 'react'
 import { IField, IFieldRender, IFieldEvents } from './types'
 import { renderers } from './renderers'
 
+// console.log("renderers", renderers)
+
 const SuperFormInput = ({
-  field,
+  // field,
   handlers,
   state,
   colIndex,
   rowIndex,
+  renderAs,
+  name,
+  type,
   ...other
 }:{
   handlers: undefined | IFieldEvents
@@ -18,34 +23,60 @@ const SuperFormInput = ({
   [key:string]: any
 }) => {
   
-  const {type, name} = field
-  console.log("const {type, name} = field", type, name)
-  const value = state[name]
-  
 
-  const render = (
-    // Array of Inputs
-    type === 'array'
-      ? 
-        // arrayOfType - custom 
-        renderers[`arrayOf${field.of}`] 
-        // default
-        || renderers[type]
-      : renderers[type]
-  )
+  const value = state[name]
+
+  let render = null
+
+  if( type === 'array' ) {
+    render = renderers[renderAs]
+      || renderers[`arrayOf${renderAs}`] 
+      || (other?.of && renderers[`arrayOf${other.of}`])
+      || renderers[type]
+
+      // console.log(
+      //   name, ':', type, ':',
+      //   renderers[renderAs] 
+      //     ? renderAs
+      //     : renderers[`arrayOf${renderAs}`] 
+      //       ? `arrayOf${renderAs}`
+      //       : renderers[`arrayOf${field.of}`]
+      //         ? `arrayOf${field.of}`
+      //         : type
+      // )
+  } else {
+    render = renderers[renderAs]
+      || renderers[type]
+  }
+
 
   return render && render({
+    state,
+    name,
     value, //: value === undefined ? '' : value,
-    field,
-    ...field,
+    // field,
+    // ...field,
+    ...other.field,
     ...handlers,
     ...other,
-    onChange: (e:any) => {
+    onChange: (e:any, field) => {
       handlers
         ?.onChange
-        ?.(e, field, rowIndex, colIndex)
+        ?.(e, 
+          field || other.field, 
+          rowIndex, 
+          colIndex
+        )
     }
-  }) || `Unsupported input type ${type}`
+  }) || (
+      <span style={{
+        color: 'red'
+      }}>
+        Unsupported input type: <strong>
+          {type}
+        </strong>
+      </span>
+    )
 }
 
 export default SuperFormInput
