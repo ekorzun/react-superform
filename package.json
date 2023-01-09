@@ -24,7 +24,7 @@
     "dist"
   ],
   "dependencies": {
-    "baobab": "^2.5.2",
+    "baobab": "^2.6.1",
     "classnames": "^2.2.6"
   },
   "devDependencies": {
